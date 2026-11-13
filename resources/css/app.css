@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AUDIRA design system — navy / white / light grey / teal. Keep components here so every
+   screen shares identical buttons, inputs, tables and badges. */
+@layer base {
+  html { @apply bg-canvas text-ink-900 antialiased; font-feature-settings: "cv11", "ss01"; }
+  [x-cloak] { display: none !important; }
+  h1, h2, h3 { @apply text-navy-900 tracking-tight; }
+}
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-navy-800 text-white hover:bg-navy-700 focus-visible:ring-navy-500; }
+  .btn-accent { @apply btn bg-teal-600 text-white hover:bg-teal-700 focus-visible:ring-teal-500; }
+  .btn-secondary { @apply btn border border-navy-100 bg-white text-navy-800 hover:bg-navy-50 focus-visible:ring-navy-300; }
+  .btn-danger { @apply btn border border-red-200 bg-white text-red-700 hover:bg-red-50 focus-visible:ring-red-400; }
+  .btn-ghost { @apply btn px-2 text-ink-600 hover:bg-navy-50 hover:text-navy-900; }
+  .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+
+  .label { @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-600; }
+  .input { @apply block w-full rounded-md border-navy-100 bg-white text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-teal-500 focus:ring-teal-500; }
+  .input-error { @apply border-red-300 focus:border-red-500 focus:ring-red-500; }
+  .hint { @apply mt-1 text-xs text-ink-500; }
+  .error { @apply mt-1 text-xs font-medium text-red-600; }
+  .checkbox { @apply h-4 w-4 rounded border-navy-200 text-teal-600 focus:ring-teal-500; }
+
+  .card { @apply rounded-lg border border-navy-100/70 bg-white shadow-card; }
+  .card-header { @apply flex items-center justify-between gap-4 border-b border-navy-100/70 px-5 py-3.5; }
+  .card-title { @apply text-sm font-semibold text-navy-900; }
+  .card-body { @apply px-5 py-4; }
+
+  .table { @apply min-w-full text-sm; }
+  .table thead th { @apply border-b border-navy-100 bg-navy-50/60 px-4 py-2.5 text-left text-2xs font-semibold uppercase tracking-wider text-ink-500; }
+  .table tbody td { @apply border-b border-navy-50 px-4 py-3 align-middle text-ink-700; }
+  .table tbody tr:last-child td { @apply border-b-0; }
+  .table tbody tr.row-link:hover { @apply bg-navy-50/40; }
+
+  .badge { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide; }
+  .badge-dot::before { content: ''; @apply h-1.5 w-1.5 rounded-full bg-current; }
+  .badge-neutral { @apply bg-navy-50 text-navy-700; }
+  .badge-info { @apply bg-blue-50 text-blue-700; }
+  .badge-teal { @apply bg-teal-50 text-teal-700; }
+  .badge-warn { @apply bg-amber-50 text-amber-700; }
+  .badge-danger { @apply bg-red-50 text-red-700; }
+  .badge-success { @apply bg-emerald-50 text-emerald-700; }
+
+  .nav-link { @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-navy-200 transition hover:bg-white/5 hover:text-white; }
+  .nav-link-active { @apply bg-white/10 text-white; box-shadow: inset 2px 0 0 theme('colors.teal.400'); }
+  .nav-section { @apply px-3 pb-1 pt-5 text-2xs font-semibold uppercase tracking-widest text-navy-400; }
+
+  .dl-row { @apply flex justify-between gap-4 border-b border-navy-50 py-2.5 text-sm last:border-0; }
+  .dl-row dt { @apply text-ink-500; }
+  .dl-row dd { @apply text-right font-medium text-ink-900; }
+}
