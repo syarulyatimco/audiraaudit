@@ -42,6 +42,14 @@ class LlmGatewayTest extends TestCase
         $this->assertSame('Checking', $res->text);
         $this->assertSame([['id' => 't2', 'name' => 'tb_analytics', 'input' => ['a' => 1]]], $res->toolCalls);
         $this->assertSame([10, 5], [$res->inputTokens, $res->outputTokens]);
+        Http::assertSent(fn (Request $r) => ! $r->hasHeader('anthropic-workspace-id'));
+    }
+
+    public function test_anthropic_workspace_header_when_configured(): void
+    {
+        Http::fake(['api.anthropic.com/v1/messages' => Http::response(['model' => 'm', 'stop_reason' => 'end_turn', 'usage' => ['input_tokens' => 1, 'output_tokens' => 1], 'content' => [['type' => 'text', 'text' => 'OK']]])]);
+        (new AnthropicClient(array_merge(config('ai.providers.anthropic'), ['api_key' => 'k', 'workspace_id' => 'wrkspc_123'])))->complete($this->request());
+        Http::assertSent(fn (Request $r) => $r->hasHeader('anthropic-workspace-id', 'wrkspc_123'));
     }
 
     public function test_openai_compatible_mapping(): void

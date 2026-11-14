@@ -34,10 +34,15 @@ class AnthropicClient implements LlmClient
             $body['tools'] = $request->tools;
         }
 
-        $http = Http::withHeaders([
+        $headers = [
             'x-api-key' => (string) $this->config['api_key'],
             'anthropic-version' => $this->config['version'] ?? '2023-06-01',
-        ])->timeout($this->config['timeout'] ?? 120)->acceptJson();
+        ];
+        // Keys that are not scoped to a workspace must name one on every request.
+        if (filled($this->config['workspace_id'] ?? null)) {
+            $headers['anthropic-workspace-id'] = (string) $this->config['workspace_id'];
+        }
+        $http = Http::withHeaders($headers)->timeout($this->config['timeout'] ?? 120)->acceptJson();
 
         $json = $this->send($http, rtrim($this->config['base_url'], '/').'/v1/messages', $body);
 

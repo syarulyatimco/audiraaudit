@@ -16,6 +16,7 @@ return [
         'anthropic' => [
             'driver' => 'anthropic',
             'api_key' => env('ANTHROPIC_API_KEY'),
+            'workspace_id' => env('ANTHROPIC_WORKSPACE_ID'),
             'base_url' => env('ANTHROPIC_BASE_URL', 'https://api.anthropic.com'),
             'version' => '2023-06-01',
             'timeout' => (int) env('AI_TIMEOUT', 120),
