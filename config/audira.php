@@ -42,6 +42,9 @@ return [
         'report_templates.manage' => ['firm_admin', 'partner'],
         // Break-glass support access is granted only by firm admins (Phase 10).
         'support.grant' => ['firm_admin'],
+        // Methodology libraries (Phase 11): everyone reads; partners and firm admins maintain firm copies.
+        'methodology.view' => $allFirmRoles,
+        'methodology.manage' => ['firm_admin', 'partner'],
     ],
 
     /*

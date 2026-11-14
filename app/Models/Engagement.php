@@ -34,6 +34,7 @@ class Engagement extends Model
             'period_start' => 'date',
             'period_end' => 'date',
             'reporting_deadline' => 'date',
+            'methodology_applied_at' => 'datetime',
         ];
     }
 
@@ -115,6 +116,16 @@ class Engagement extends Model
     public function auditStrategy(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(AuditStrategy::class);
+    }
+
+    public function methodologyLibrary(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(MethodologyLibrary::class);
+    }
+
+    public function programmeSheets(): HasMany
+    {
+        return $this->hasMany(ProgrammeSheet::class)->orderBy('sort_order')->orderBy('reference');
     }
 
     public function procedures(): HasMany

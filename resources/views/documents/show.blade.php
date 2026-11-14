@@ -5,7 +5,10 @@
         <div class="space-y-6 lg:col-span-2">
             <div class="card">
                 <div class="card-header"><div><h2 class="text-lg font-semibold text-navy-900">{{ $document->title }}</h2><p class="text-xs text-ink-500">{{ $document->category->label() }} · uploaded by {{ $document->uploader->name }} {{ local_time($document->created_at) }}</p></div>
-                    @if ($document->archived_at)<span class="badge badge-neutral">Archived</span>@endif</div>
+                    <div class="flex items-center gap-2">
+                        @if ($document->archived_at)<span class="badge badge-neutral">Archived</span>@endif
+                        <button type="button" x-data="copyText('[[doc:{{ $document->uuid }}]]')" @click="copy()" class="btn-secondary btn-sm" title="Copy a shortcut to paste into a programme WP ref or a working paper"><span x-show="! copied">Copy as link</span><span x-show="copied" x-cloak>Copied</span></button>
+                    </div></div>
                 @if ($document->description)<p class="card-body whitespace-pre-line text-sm text-ink-700">{{ $document->description }}</p>@endif
             </div>
             <div class="card overflow-x-auto">

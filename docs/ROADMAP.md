@@ -18,6 +18,7 @@ critical defects from the previous one remain open.
 | 8 | Audit testing, evidence linking, findings, misstatement evaluation, adjustments + agents | ✅ Done (2026-11-20) |
 | 9 | Completion, quality review (EQR), FS preparation, audit reporting & sign-off + agents | ✅ Done (2026-11-21) |
 | 10 | Billing integration (payment gateway, invoices, tax), Monitoring agent, Superadmin analytics, break-glass support access, performance & pen-test hardening | ✅ Done (2026-11-22) — external pen test and go-live checklist pending (SECURITY.md) |
+| 11 | Methodology libraries (AUDIRA template + firm copies), FSLI-routed Excel-style programme grids, .xlsx round trip, copy-as-link | ✅ Done (2026-11-14) |
 
 ## Phase 1 — detailed scope (delivered)
 - [x] Multi-tenant core: `TenantContext`, `FirmScope`, `BelongsToFirm`, RLS policies, middleware
@@ -162,6 +163,20 @@ critical defects from the previous one remain open.
 - [x] Break-glass support access (firm-granted, ≤72 h, metadata-only, logged)
 - [x] Security headers, no-store for authenticated pages, supporting indexes
 - [x] 186 tests on PostgreSQL
+
+## Phase 11 — Methodology libraries and Excel-style programmes (delivered 2026-11-14)
+- [x] AUDIRA methodology template (original wording, ISA numbers only) and firm copies (ADR-041)
+- [x] Library choice per engagement; routing to the engagement and to mapped FSLIs by stage
+- [x] Excel-style grid with custom columns, keyboard editing and block paste
+- [x] Hash-bound Done / Review sign-offs per row; DB constraints and delete guard (ADR-042)
+- [x] .xlsx download / upload for sheets and library programmes (ADR-043)
+- [x] Copy-as-link shortcuts for programme steps and documents (ADR-044)
+- [x] Completion gate for the programme grid; 197 tests on PostgreSQL
+
+### Open from Phase 11
+- Paragraph references in the template: the firm's technical reviewer adds them from the firm's licensed standards.
+- AI: let the Audit Programme agent suggest extra rows for a sheet from the risk register (accept-only, like other agents).
+- Linking a grid row to a Phase 6 risk-response procedure and its sampling plan (today a shortcut in WP ref).
 
 ### Open decisions for go-live
 - Payment gateway provider (FPX/card) and the platform's tax position (ADR-037).

@@ -115,6 +115,9 @@
 ## Re-authentication for the opinion and report sign-off (Phase 9)
 Approving an `audit_opinion` or `report_signoff` request requires the engagement partner to re-enter their password, and their TOTP code when MFA is enrolled, at the moment of approval (`audira.reauth_approval_types`). The check is enforced in `ApprovalService::decide` (approve requires a re-authenticated caller) and performed in `ApprovalController`; failed attempts are written to the activity log. Signed reports are immutable at database level.
 
+## Phase 11 — shared methodology content
+`methodology_*` tables hold AUDIRA's template (firm_id NULL) beside firm copies. RLS uses split policies: every firm can SELECT the template, but INSERT/UPDATE/DELETE require the row's firm to be the tenant, so the template is writable only by platform seeding. The `SharedWithFirms` trait mirrors this in the application and throws on any attempt to change the template. Uploaded programme workbooks go through the Phase 3 hardened reader (zip-bomb and DOCTYPE guards, size limits); the writer emits inline strings only, so no cell is ever a formula. Link tokens are resolved under the tenant scope; `/links/…` re-checks engagement access.
+
 ## Phase 10 hardening
 - **Headers** (`SecurityHeaders` middleware): CSP `default-src 'self'` with `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'`, `base-uri 'self'`; `X-Frame-Options: DENY`; `X-Content-Type-Options: nosniff`; `Referrer-Policy: strict-origin-when-cross-origin`; restrictive `Permissions-Policy`; `Cross-Origin-Opener-Policy: same-origin`; HSTS on HTTPS; `Cache-Control: no-store, private` for authenticated responses.
 - **Break-glass support access**: see ADR-039 — firm-granted, ≤72 h, metadata-only, every view logged to the firm's audit trail.

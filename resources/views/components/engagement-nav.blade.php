@@ -5,7 +5,7 @@
         ['entity-understanding.show', 'Understanding the entity', 'entity-understanding.*'],
         ['trial-balance.index', 'Trial balance', ['trial-balance.*', 'lead-schedules.*', 'adjustments.*']],
         ['strategy.show', 'Planning', ['strategy.*', 'materiality.*', 'risks.*']],
-        ['programme.index', 'Fieldwork', ['programme.*', 'sampling.*', 'findings.*']],
+        ['programmes.index', 'Fieldwork', ['programmes.*', 'programme.*', 'sampling.*', 'findings.*']],
         ['completion.index', 'Completion', ['completion.*', 'reporting.*']],
         ['working-papers.index', 'Working papers', 'working-papers.*'],
         ['client-requests.index', 'Client requests', ['client-requests.*']],

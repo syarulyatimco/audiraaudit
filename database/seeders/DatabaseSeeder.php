@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         app(TenantContext::class)->runAsSystem(function () {
-            $this->call([PlanSeeder::class, LibrarySeeder::class, FsliTemplateSeeder::class]);
+            $this->call([PlanSeeder::class, LibrarySeeder::class, FsliTemplateSeeder::class, MethodologySeeder::class]);
         });
     }
 }

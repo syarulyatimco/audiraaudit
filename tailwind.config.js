@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./resources/views/**/*.blade.php', './app/View/**/*.php', './resources/js/**/*.js'],
+  content: ['./resources/views/**/*.blade.php', './app/View/**/*.php', './app/Services/Methodology/LinkTokens.php', './resources/js/**/*.js', './public/js/app.js'],
   // Status badge tones are composed dynamically in components/status.blade.php.
   safelist: ['badge-neutral', 'badge-info', 'badge-teal', 'badge-warn', 'badge-danger', 'badge-success'],
   theme: {

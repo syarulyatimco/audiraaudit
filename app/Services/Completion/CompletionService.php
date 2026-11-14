@@ -145,12 +145,15 @@ class CompletionService
         $checks = $this->schedules->build($e)['checks'];
         $tbOk = $checks['tb_balances'] && $checks['sofp_difference'] === 0 && $checks['unmapped_count'] === 0;
         $eqrNeeded = $this->eqrRequired($e);
+        $grid = app(\App\Services\Methodology\ProgrammeGridService::class)->status($e);
+        $gridOpen = $grid['not_done'] + $grid['not_reviewed'];
 
         return [
             'conclusions_approved' => ['ok' => $c?->conclusions_status === SignificanceStatus::Approved, 'detail' => 'Final conclusions approved by the engagement partner'],
             'working_papers' => ['ok' => $papers->isNotEmpty() && $unreviewed === 0, 'detail' => $unreviewed ? "{$unreviewed} working paper(s) not yet reviewed" : 'All working papers prepared and reviewed'],
             'review_notes' => ['ok' => $notes === 0, 'detail' => $notes ? "{$notes} review note(s) not cleared" : 'All review notes cleared'],
             'procedures' => ['ok' => $procs === 0, 'detail' => $procs ? "{$procs} procedure(s) not completed" : 'All procedures completed'],
+            'programme_grid' => ['ok' => $gridOpen === 0, 'detail' => $gridOpen ? "{$grid['not_done']} programme step(s) not signed as done, {$grid['not_reviewed']} awaiting review" : ($grid['rows'] ? 'Every programme step done and reviewed' : 'No methodology programme steps on this engagement')],
             'sampling' => ['ok' => $plans === 0, 'detail' => $plans ? "{$plans} sample(s) not yet evaluated" : 'All samples evaluated'],
             'trial_balance' => ['ok' => $tbOk, 'detail' => $tbOk ? 'Adjusted TB balances and is fully mapped' : 'Adjusted TB does not balance, or accounts are unmapped'],
             'eqr' => ['ok' => ! $eqrNeeded || $c?->eqr_completed_at !== null, 'detail' => $eqrNeeded ? ($c?->eqr_completed_at ? 'Engagement quality review completed' : 'Engagement quality review not completed') : 'No engagement quality reviewer assigned'],

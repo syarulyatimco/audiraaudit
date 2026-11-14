@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] — 2026-11-14 — Phase 11 (Audit methodology libraries and Excel-style programmes)
+
+### Added
+- **Methodology libraries.** AUDIRA ships an original-wording methodology template (34 programmes, 140+ steps across planning, controls and substantive; each step names the ISA it responds to, with no standards text and no paragraph numbers). The template is read-only; partners and firm admins make firm copies and edit them (programmes, routing, steps, Excel round trip, archive). `/methodology`.
+- **Routing to FSLIs.** Choosing a library on an engagement creates programme sheets: planning programmes for the engagement, controls and substantive programmes for each FSLI with mapped accounts (by FSLI code, with classification fall-backs). "Route new FSLIs" adds sheets for FSLIs mapped later. The library can be switched only while nothing is signed.
+- **Excel-style grid** (hand-built Alpine component, no new packages): Ref · Procedure · Assertion · Risk · Done by · Date · WP ref · Conclusion plus up to eight auditor-added columns; keyboard editing, block paste from Excel, insert/move/delete rows; every edit saved per cell.
+- **Row sign-offs.** "Sign done" records Done by and Date bound to a content hash; review by the engagement partner or manager (never the preparer; DB CHECK); editing a signed row clears both sign-offs and logs what was cleared; signed rows cannot be deleted (DB trigger).
+- **.xlsx download and upload** for engagement sheets and library programmes (dependency-free `XlsxWriter`; rows matched on a hidden Row ID; new rows and new columns added; sign-off columns ignored).
+- **Copy as link.** `[[step:…]]` and `[[doc:…]]` shortcuts from any programme step or document, rendered as live chips in WP ref / conclusion cells and listed on working papers ("Shortcuts in this paper"); `/links/{step|doc}/{uuid}` redirects; tokens from another firm show as broken links.
+- Completion gate `programme_grid`: every methodology step done and reviewed.
+
+### Changed
+- Fieldwork tabs: **Programmes** (new) and **Risk responses** (the Phase 6 risk-linked procedures, unchanged).
+- `SpreadsheetReader::read()` takes a cell-length limit and reads rich inline strings.
+
 ## [1.0.0] — 2026-11-22 — Phase 10 (Billing, monitoring, platform analytics, break-glass support, hardening)
 
 ### Added

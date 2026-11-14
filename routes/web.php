@@ -90,6 +90,26 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
     Route::get('/firm/report-templates', [ReportTemplateController::class, 'index'])->name('report-templates.index');
     Route::put('/firm/report-templates/{opinion}', [ReportTemplateController::class, 'update'])->name('report-templates.update');
 
+    // Audit methodology libraries (Phase 11): AUDIRA template (read-only) and firm copies
+    Route::prefix('/methodology')->name('methodology.')->scopeBindings()->controller(\App\Http\Controllers\Methodology\MethodologyController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{methodologyLibrary}', 'show')->name('show');
+        Route::post('/{methodologyLibrary}/copy', 'copy')->name('copy');
+        Route::put('/{methodologyLibrary}', 'update')->name('update');
+        Route::post('/{methodologyLibrary}/archive', 'archive')->name('archive');
+        Route::post('/{methodologyLibrary}/programmes', 'storeProgramme')->name('programmes.store');
+        Route::get('/{methodologyLibrary}/programmes/{methodologyProgramme}', 'programme')->name('programmes.show');
+        Route::put('/{methodologyLibrary}/programmes/{methodologyProgramme}', 'updateProgramme')->name('programmes.update');
+        Route::delete('/{methodologyLibrary}/programmes/{methodologyProgramme}', 'destroyProgramme')->name('programmes.destroy');
+        Route::get('/{methodologyLibrary}/programmes/{methodologyProgramme}/export', 'export')->name('programmes.export');
+        Route::post('/{methodologyLibrary}/programmes/{methodologyProgramme}/import', 'import')->middleware('throttle:uploads')->name('programmes.import');
+        Route::post('/{methodologyLibrary}/programmes/{methodologyProgramme}/steps', 'storeStep')->name('steps.store');
+        Route::patch('/{methodologyLibrary}/programmes/{methodologyProgramme}/steps/{methodologyStep}', 'updateStep')->name('steps.update');
+        Route::delete('/{methodologyLibrary}/programmes/{methodologyProgramme}/steps/{methodologyStep}', 'destroyStep')->name('steps.destroy');
+        Route::post('/{methodologyLibrary}/programmes/{methodologyProgramme}/steps/{methodologyStep}/move', 'moveStep')->name('steps.move');
+    });
+    Route::get('/links/{type}/{uuid}', [\App\Http\Controllers\Methodology\LinkController::class, 'show'])->whereIn('type', ['step', 'doc'])->whereUuid('uuid')->name('links.show');
+
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users/invitations', [UserController::class, 'invite'])->name('users.invite');
     Route::delete('/users/invitations/{invitation}', [UserController::class, 'revokeInvitation'])->name('users.invitations.revoke');
@@ -192,6 +212,27 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
         Route::post('/sampling/{plan}/items/{item}', [SamplingController::class, 'result'])->name('sampling.result');
         Route::post('/sampling/{plan}/evaluate', [SamplingController::class, 'evaluate'])->name('sampling.evaluate');
         Route::post('/programme/{procedure}/paper', [ProgrammeController::class, 'paper'])->name('programme.paper');
+
+        // Methodology programme grids (Phase 11)
+        Route::controller(\App\Http\Controllers\Fieldwork\ProgrammeGridController::class)->group(function () {
+            Route::get('/programmes', 'index')->name('programmes.index');
+            Route::post('/programmes/library', 'apply')->name('programmes.apply');
+            Route::post('/programmes/refresh', 'refresh')->name('programmes.refresh');
+            Route::post('/programmes', 'store')->name('programmes.store');
+            Route::get('/programmes/{programmeSheet}', 'show')->name('programmes.show');
+            Route::put('/programmes/{programmeSheet}', 'update')->name('programmes.update');
+            Route::delete('/programmes/{programmeSheet}', 'destroy')->name('programmes.destroy');
+            Route::get('/programmes/{programmeSheet}/export', 'export')->name('programmes.export');
+            Route::post('/programmes/{programmeSheet}/import', 'import')->middleware('throttle:uploads')->name('programmes.import');
+            Route::post('/programmes/{programmeSheet}/columns', 'addColumn')->name('programmes.columns.store');
+            Route::put('/programmes/{programmeSheet}/columns/{key}', 'renameColumn')->name('programmes.columns.update');
+            Route::delete('/programmes/{programmeSheet}/columns/{key}', 'removeColumn')->name('programmes.columns.destroy');
+            Route::post('/programmes/{programmeSheet}/rows', 'addRow')->name('programmes.rows.store');
+            Route::patch('/programmes/{programmeSheet}/rows/{programmeRow}', 'updateCell')->name('programmes.rows.update');
+            Route::delete('/programmes/{programmeSheet}/rows/{programmeRow}', 'deleteRow')->name('programmes.rows.destroy');
+            Route::post('/programmes/{programmeSheet}/rows/{programmeRow}/move', 'moveRow')->name('programmes.rows.move');
+            Route::post('/programmes/{programmeSheet}/rows/{programmeRow}/{action}', 'signoff')->whereIn('action', ['done', 'review', 'unsign'])->name('programmes.rows.signoff');
+        });
 
         // Testing, findings and audit differences (Phase 8)
         Route::post('/sampling/{plan}/findings', [FindingController::class, 'fromSample'])->name('findings.from-sample');

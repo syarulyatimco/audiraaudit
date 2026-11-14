@@ -5,9 +5,12 @@
         @forelse ($wp->documents as $doc)
             <li class="flex items-center justify-between gap-3 px-5 py-2.5 text-sm">
                 <a href="{{ route('documents.show', [$engagement, $doc]) }}" class="min-w-0 truncate font-medium text-navy-900 hover:text-teal-700">{{ $doc->title }}<span class="ml-1 text-xs font-normal text-ink-400">v{{ $doc->currentVersion?->version_no }}</span></a>
-                @if ($canEdit)
-                    <form method="POST" action="{{ route('working-papers.documents.unlink', [$engagement, $wp, $doc]) }}">@csrf @method('DELETE')<button class="text-xs text-ink-400 hover:text-red-700">Unlink</button></form>
-                @endif
+                <span class="flex shrink-0 items-center gap-3">
+                    <button type="button" x-data="copyText('[[doc:{{ $doc->uuid }}]]')" @click="copy()" class="text-xs text-ink-400 hover:text-teal-700" title="Copy a shortcut to paste into a WP ref or another paper"><span x-show="! copied">Copy link</span><span x-show="copied" x-cloak class="text-teal-700">Copied</span></button>
+                    @if ($canEdit)
+                        <form method="POST" action="{{ route('working-papers.documents.unlink', [$engagement, $wp, $doc]) }}">@csrf @method('DELETE')<button class="text-xs text-ink-400 hover:text-red-700">Unlink</button></form>
+                    @endif
+                </span>
             </li>
         @empty
             <li class="px-5 py-4 text-sm text-ink-500">No evidence linked.</li>

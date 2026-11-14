@@ -12,7 +12,7 @@ createdb audira_test           # owned by the app role
 vendor/bin/phpunit             # or: composer test
 ```
 
-## Current suite (186 tests, 1,904 assertions — all passing 2026-11-22)
+## Current suite (197 tests, 2,397 assertions — all passing 2026-11-14)
 
 | Area | File | What it proves |
 |---|---|---|
@@ -52,6 +52,8 @@ vendor/bin/phpunit             # or: composer test
 | Completion agents | `Ai/CompletionAgentsTest` | completion drafts: opinion wording removed, materiality/going-concern conclusions and unverified figures flagged, closed/unknown items removed, accepted drafts stay open; quality review notes: unknown papers and opinion references removed, nothing raised until accepted, raised in the accepting reviewer's name, staff cannot raise |
 | Billing & support | `Platform/BillingAndSupportTest` | minimum-seat billing, no tax unless configured, tax maths, numbering, one invoice per period, frozen amounts (trigger), firm sees only its invoices, payment/void by superadmin, billing run issue + roll + past due + restore on payment; support grants only by firm admins, ≤72 h (validation + DB), one at a time, logged views with counter, revoked/expired refused; security headers and no-store |
 | Monitoring | `Platform/MonitoringTest` | deadline/overdue-request/no-materiality alerts, notifications to partner and manager only and only for new alerts, escalation, auto-resolution, overview panel; monitoring digest guard (unknown alert kinds, opinion wording) |
+| Methodology libraries | `Methodology/MethodologyLibraryTest` | template seeded once, references by standard number only; all firms read the template, only partners/admins copy; template not writable (app + RLS); firm copies invisible to other firms; programme validation, step grid editing, Excel round trip, archive locks edits |
+| Programme grids | `Methodology/ProgrammeGridTest` | routing to engagement / FSLI codes / classification fall-back; cell editing permissions; done needs a conclusion; hash-bound review, staff cannot review, preparer cannot self-review (app + CHECK); edit clears sign-offs with log; signed rows undeletable (app + trigger); rows and custom columns; .xlsx export/import (updates, adds, new columns, sign-off cells ignored, bad file); link tokens in grid and working papers, broken cross-firm links, redirect route; library switch blocked after signing; completion gate |
 | Platform | `Admin/SuperadminTest` | admin area isolation both ways, plan editing with price snapshots, plan change, suspend/restore, billing minimum & free client users, superadmin CLI |
 
 ## Checklist for every new module

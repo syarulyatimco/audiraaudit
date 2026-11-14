@@ -50,6 +50,8 @@ Legend: 🤖 AI may draft/recommend · 👤 human performs · ✅ human approval
 1. 🤖 Generate procedures responsive to each assessed risk (traceability risk → procedure).
 2. 👤 Edit, assign to staff, set budgets.
 
+*Methodology programmes (Phase 11):* Fieldwork › Programmes. A partner, manager or senior picks the methodology library (AUDIRA template or a firm copy). AUDIRA creates the planning programmes (A1–A5) for the engagement and, for every FSLI with mapped accounts, its controls-testing and substantive programmes. Each is an Excel-style grid (Ref, Procedure, Assertion, Risk, Done by, Date, WP ref, Conclusion, plus the team's own columns) that can be downloaded and uploaded as .xlsx. Staff record the conclusion and sign each step done; the partner or manager reviews. Any step or document can be copied as a link and pasted into a WP ref, a conclusion or a working paper. Completion requires every step done and reviewed. The Phase 6 risk-linked procedures remain under Fieldwork › Risk responses for sampling.
+
 ## Stage 8 — Sampling (Phase 6) — *ISA 530, ISA 500*
 1. 👤 Define population; system **validates completeness** and **reconciles** population total to TB/sub-ledger.
 2. System identifies individually significant items (above a threshold the auditor sets, e.g. linked to performance materiality) for 100% testing.

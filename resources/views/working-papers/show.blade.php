@@ -16,7 +16,7 @@
                     @endif
                     <x-field name="title" label="Title" :value="$wp->title" required :disabled="! $canEdit" />
                     <x-field name="objective" label="Objective" type="textarea" rows="3" :value="$wp->objective" :disabled="! $canEdit" />
-                    <x-field name="work_performed" label="Work performed" type="textarea" rows="12" :value="$wp->work_performed" :disabled="! $canEdit" hint="Procedures performed, results and exceptions. Reference evidence by document title." />
+                    <x-field name="work_performed" label="Work performed" type="textarea" rows="12" :value="$wp->work_performed" :disabled="! $canEdit" hint="Procedures performed, results and exceptions. Paste copied links ([[step:…]] or [[doc:…]]) to add shortcuts to programme steps and documents." />
                     <x-field name="conclusion" label="Conclusion" type="textarea" rows="4" :value="$wp->conclusion" :disabled="! $canEdit" />
                 </div>
                 @if ($canEdit)
@@ -28,6 +28,7 @@
             </form>
         </div>
         <div class="space-y-6">
+            @include('working-papers.partials.shortcuts')
             @include('working-papers.partials.signoffs')
             @include('working-papers.partials.notes')
             @include('working-papers.partials.evidence')

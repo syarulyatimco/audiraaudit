@@ -182,6 +182,18 @@ run `composer update` on a normal network to produce a lock file from Packagist.
 **Decision.** Platform staff have no standing access to firm data. A firm admin grants access with a reason for at most 72 hours (DB check), one grant at a time, revocable. The support view is a separate read-only admin page that renders metadata only (users and MFA state, engagement codes/statuses/dates, audit-trail event names) — never documents, working papers, correspondence, client names in engagement lists or figures — and logs every view to the firm's audit trail with a view counter.
 **Consequences.** Support for content-level problems happens with the firm on a call; the firm keeps full control and evidence of access.
 
+## ADR-041 Methodology is AUDIRA's own wording; firms own their copies (2026-11-14)
+AUDIRA ships one methodology template written in its own words. Steps name the standard they respond to (e.g. "ISA 505") but quote nothing and leave paragraph numbers out, so no standards text is reproduced (consistent with ADR-010); the firm's reviewer adds paragraph references from its licensed copy. The template (firm_id NULL) is readable by every firm and writable only by platform seeding — enforced by the `SharedWithFirms` trait and split RLS policies (SELECT allows NULL firm_id; INSERT/UPDATE/DELETE require the tenant). Engagements receive a **snapshot** of a library when it is applied; later library edits never change an engagement under way.
+
+## ADR-042 Programme rows: sign-off is the "Done by / Date" columns (2026-11-14)
+Done by and Date are not typed — they are written by "Sign done" together with a SHA-256 of the row's typed content. Review needs a prior Done by someone else (DB CHECK) and the hash to still match. Any edit to a signed row clears both sign-offs, logging the cleared values. Signed rows cannot be deleted (trigger). These are working-paper-level sign-offs (like ADR-009), not §9 approvals, so they do not go through ApprovalService; the completion gate requires every row done and reviewed.
+
+## ADR-043 Excel round trip without a spreadsheet library (2026-11-14)
+Package installs are not available, and the needs are narrow, so `App\Support\Spreadsheets\XlsxWriter` writes SpreadsheetML directly (inline strings only — nothing a user typed becomes a formula; frozen header; hidden Row ID column). Upload reuses the hardened Phase 3 reader. Rows match on Row ID; rows missing from the file are left untouched (no deletes through Excel); unknown headings become custom columns; sign-off columns in the file are ignored.
+
+## ADR-044 Copy-as-link tokens resolved at display time (2026-11-14)
+Shortcuts are stored as plain tokens (`[[step:uuid]]`, `[[doc:uuid]]`) inside the text the auditor writes, and resolved when shown, under the current tenant scope. Renumbering a step or retitling a document therefore never breaks a link; a token from another firm cannot be resolved and shows as a broken link. `/links/…` gives a plain URL form that checks engagement access before redirecting.
+
 ## ADR-040 Browser hardening baseline (2026-11-22)
 **Decision.** All web responses carry a same-origin CSP, `frame-ancestors 'none'`, nosniff, strict referrer and permissions policies, COOP and HSTS on TLS; authenticated responses are `no-store`. Scripts still allow `'unsafe-inline'`/`'unsafe-eval'` because the standard Alpine build evaluates inline expressions.
 **Consequences.** Moving to the Alpine CSP build with nonces is the next tightening step (SECURITY.md checklist).

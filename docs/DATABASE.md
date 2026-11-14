@@ -256,6 +256,19 @@ did is in the append-only steps and usage rows.
 | support_access_grants | RLS | uuid, granted_by, reason, expires_at (**CHECK ≤ 72 h after creation**), revoked_at/by, views, last_viewed_at |
 | indexes | — | partial `approvals(engagement_id) where pending`, `findings(engagement_id, status)`, `pbc_items(engagement_id, status, due_on)` |
 
+## 3k. Phase 11 schema (implemented)
+
+| Table | Tenant | Key points |
+|---|---|---|
+| methodology_libraries | **shared** (firm_id NULL = AUDIRA template) | uuid, code (unique among platform rows), name, description, based_on_id, version, status active/archived |
+| methodology_programmes | shared | library, stage planning/controls/substantive, scope engagement/fsli/classification (**CHECK consistency**), fsli_codes jsonb, fsli_classification, ref_prefix (unique per library), title, objective |
+| methodology_steps | shared | programme, position, ref, procedure, assertions, isa_refs, guidance |
+| engagements | — | + methodology_library_id, methodology_applied_at |
+| programme_sheets | RLS | engagement, engagement_fsli_id (NULL for planning), stage, reference (unique per engagement), title, objective, source_programme_id, columns jsonb (auditor-added) |
+| programme_rows | RLS | sheet, position, ref, procedure, assertions, risk, wp_ref, conclusion, extra jsonb, isa_refs, guidance, done_by/done_at/signed_hash (**CHECK all or none**), reviewed_by/at (**CHECK needs done, reviewer ≠ preparer**); **trigger: signed rows cannot be deleted** |
+
+Shared tables use four policies: `methodology_read` (SELECT: firm_id IS NULL or tenant), and insert/update/delete restricted to the tenant (or bypass for platform seeding).
+
 ## 4. Row-Level Security
 
 RLS is enabled **and forced** on every table with `firm_id`:

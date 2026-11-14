@@ -15,16 +15,16 @@ class SpreadsheetReader
     private const MAX_XML_BYTES = 60 * 1024 * 1024;
 
     /** @return list<list<string>> */
-    public function read(string $path, string $extension, int $maxRows): array
+    public function read(string $path, string $extension, int $maxRows, int $maxCell = 255, string $what = 'the trial balance'): array
     {
         $rows = match (strtolower($extension)) {
             'csv', 'txt' => $this->readCsv($path, $maxRows),
             'xlsx' => $this->readXlsx($path, $maxRows),
-            default => throw ValidationException::withMessages(['file' => 'Upload the trial balance as CSV or XLSX.']),
+            default => throw ValidationException::withMessages(['file' => "Upload {$what} as CSV or XLSX."]),
         };
 
         // Drop trailing empty rows; normalise cells.
-        $rows = array_map(fn ($r) => array_map(fn ($c) => mb_substr(trim((string) $c), 0, 255), $r), $rows);
+        $rows = array_map(fn ($r) => array_map(fn ($c) => mb_substr(trim(str_replace("\r\n", "\n", (string) $c)), 0, $maxCell), $r), $rows);
         while ($rows && implode('', end($rows)) === '') {
             array_pop($rows);
         }
@@ -102,7 +102,7 @@ class SpreadsheetReader
                     $type = (string) $c['t'];
                     $value = match ($type) {
                         's' => $shared[(int) $c->v] ?? '',
-                        'inlineStr' => (string) ($c->is->t ?? ''),
+                        'inlineStr' => isset($c->is->t) ? (string) $c->is->t : implode('', array_map(fn ($r) => (string) $r->t, iterator_to_array($c->is->r ?? [], false))),
                         'b' => ((string) $c->v) === '1' ? 'TRUE' : 'FALSE',
                         default => (string) $c->v,
                     };
