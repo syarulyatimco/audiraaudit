@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0] — 2026-11-15 — Phase 13 (General ledger, journal entry testing, ageing)
+
+### Added
+- **General ledger import** (Trial balance › General ledger): upload a CSV/XLSX or pick a document already on the engagement (e.g. uploaded by the client in the portal); headings from common accounting exports are detected (report title lines skipped); day-first dates, ISO dates and Excel serial dates; Dr/Cr or a signed amount; "balance b/f" rows recognised as opening balances; immutable lines (DB trigger); one active GL per engagement.
+- **Reconciliation to the TB** per account (opening + movements = TB closing; opening from GL b/f rows, else prior-year TB for balance-sheet accounts, nil for P&L) with a debits = credits check.
+- **Drill-down** to GL postings from the lead schedules (per FSLI or account), with search.
+- **Journal entry testing**: weekend postings, flagged dates (e.g. public holidays), days around the period end, round amounts, amount threshold, flagged or infrequent users, journal types, description keywords, accounts, and a minimum number of criteria met. Saved tests (up to 500 entries) record a result per entry (exceptions need a note, optional evidence document) and a conclusion.
+- **Ageing** (Trial balance › Ageing): aged receivables / payables listings (current and prior year) with bucket columns and their starting age detected from headings; each row's buckets must add up to its total; reconciliation to the linked FSLI (unadjusted TB); amounts by age, balances over 90/180/365 days, credit balances in receivables (debit in payables), top-10 concentration, prior-year comparison.
+- **Sampling populations** loaded from GL postings (by FSLI or accounts; debits, credits or all) or from an ageing listing's positive balances.
+
+### Changed
+- `SamplingService::loadPopulation()` extracted for reuse.
 ## [1.2.0] — 2026-11-14 — Phase 12 (Management-prepared FS, PDF output, programme ↔ risk-response links, AI step suggestions, request lists)
 
 ### Added

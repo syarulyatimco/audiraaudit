@@ -122,6 +122,10 @@ Approving an `audit_opinion` or `report_signoff` request requires the engagement
 - Management's financial statements are written only through `/portal` routes by portal users of the engagement's client (portal middleware + `ClientFsService::assertClient`); firm users cannot write them. Submitted versions are immutable at database level; the auditor's tie-out map is never shown to the client.
 - PDF rendering runs Chrome headless on server-generated, escaped HTML with a throwaway profile and a dead proxy (no network fetches), with a timeout; keep the sandbox on by running the app as a non-root user.
 
+## Phase 13 — ledgers and listings
+- GL and ageing files are untrusted: same reader limits as the TB (zip-bomb and DOCTYPE guards, row limits: 200,000 GL rows, 20,000 ageing rows); activation reads the stored, malware-scanned document only; imported lines are immutable (triggers).
+- Journal entry search terms are bound parameters (keywords escaped for ILIKE); no user input is concatenated into SQL.
+
 ## Phase 10 hardening
 - **Headers** (`SecurityHeaders` middleware): CSP `default-src 'self'` with `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'`, `base-uri 'self'`; `X-Frame-Options: DENY`; `X-Content-Type-Options: nosniff`; `Referrer-Policy: strict-origin-when-cross-origin`; restrictive `Permissions-Policy`; `Cross-Origin-Opener-Policy: same-origin`; HSTS on HTTPS; `Cache-Control: no-store, private` for authenticated responses.
 - **Break-glass support access**: see ADR-039 — firm-granted, ≤72 h, metadata-only, every view logged to the firm's audit trail.

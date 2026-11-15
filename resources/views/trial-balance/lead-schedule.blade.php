@@ -6,6 +6,8 @@
         <div><a href="{{ route('lead-schedules.index', $engagement) }}" class="text-sm text-ink-500 hover:text-navy-900">← Lead schedules</a>
             <h2 class="mt-1 text-xl font-semibold">{{ $f->name }} <span class="font-mono text-sm text-ink-400">{{ $f->code }}</span></h2>
             <p class="text-sm text-ink-500">{{ $f->classification->label() }} · amounts shown on the {{ $f->classification->sign() > 0 ? 'debit' : 'credit' }} side as positive</p></div>
+        @php $glOn = $engagement->activeGlImport() !== null; @endphp
+        @if ($glOn)<a href="{{ route('ledger.accounts', [$engagement, 'fsli' => $f->code]) }}" class="btn-secondary">GL postings</a>@endif
         @if ($f->workingPaper)
             <a href="{{ route('working-papers.show', [$engagement, $f->workingPaper]) }}" class="btn-secondary">Open {{ $f->workingPaper->reference }}</a>
         @elseif ($canCreatePaper)
@@ -19,7 +21,7 @@
             @php $s = $f->classification->sign(); @endphp
             @forelse ($schedule['accounts'] as $a)
                 <tr class="{{ in_array($a['code'], $schedule['contra'], true) ? 'bg-amber-50/50' : '' }}">
-                    <td><span class="font-mono text-xs font-semibold">{{ $a['code'] }}</span> {{ $a['name'] }}@if (in_array($a['code'], $schedule['contra'], true))<span class="badge badge-neutral ml-1" title="Balance on the opposite side to the FSLI (e.g. accumulated depreciation, allowances, overdrafts)">Opposite balance</span>@endif</td>
+                    <td>@if ($glOn)<a href="{{ route('ledger.accounts', [$engagement, 'account' => $a['code']]) }}" class="font-mono text-xs font-semibold text-navy-800 hover:text-teal-700" title="GL postings">{{ $a['code'] }}</a>@else<span class="font-mono text-xs font-semibold">{{ $a['code'] }}</span>@endif {{ $a['name'] }}@if (in_array($a['code'], $schedule['contra'], true))<span class="badge badge-neutral ml-1" title="Balance on the opposite side to the FSLI (e.g. accumulated depreciation, allowances, overdrafts)">Opposite balance</span>@endif</td>
                     <td class="text-right tabular-nums text-ink-500">{{ amount($s * $a['py']) }}</td>
                     <td class="text-right tabular-nums">{{ amount($s * $a['cy']) }}</td>
                     <td class="text-right tabular-nums text-teal-700">{{ amount($s * $a['adj']) }}</td>

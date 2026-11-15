@@ -277,6 +277,17 @@ Shared tables use four policies: `methodology_read` (SELECT: firm_id IS NULL or 
 | client_fs_versions | RLS | version (unique per statement), content jsonb + content_sha256, submitted_by/at, directors_approved + names + date (**CHECK**), review_status received/changes_requested/accepted/superseded (**CHECK accepted ⇒ directors approved + reviewer; changes ⇒ comment**); **trigger: content, author and approval immutable; no delete** |
 | programme_rows.procedure_id | — | linked risk-response procedure (restrict delete) |
 
+## 3m. Phase 13 schema (implemented)
+
+| Table | Tenant | Key points |
+|---|---|---|
+| gl_imports | RLS | uuid, engagement, document (source), status pending/active/superseded/discarded (**one active per engagement**), header_row, column_map, preview, line_count, debit/credit totals, first/last date, reconciliation jsonb |
+| gl_lines | RLS | import, seq, account code/name, posted_on, reference, description, debit/credit/amount sen (**CHECK amount = debit − credit**), journal_type, posted_by, is_opening; **trigger: immutable** |
+| jet_tests | RLS | reference JET-nn, title, criteria jsonb, status open/concluded (**CHECK concluded ⇒ conclusion + who/when**) |
+| jet_test_items | RLS | test, gl line (unique pair), reasons, result no_exception/exception (**CHECK result ⇒ tester; exception ⇒ note**), evidence document |
+| ageing_reports | RLS | type receivables/payables, period current/prior (**one active per type/period**), FSLI, as_at, buckets jsonb [{label, min_days}], totals |
+| ageing_lines | RLS | party code/name, total_sen, bucket_sen jsonb; **trigger: immutable** |
+
 ## 4. Row-Level Security
 
 RLS is enabled **and forced** on every table with `firm_id`:

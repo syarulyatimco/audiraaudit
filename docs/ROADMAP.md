@@ -18,6 +18,7 @@ critical defects from the previous one remain open.
 | 8 | Audit testing, evidence linking, findings, misstatement evaluation, adjustments + agents | ✅ Done (2026-11-20) |
 | 9 | Completion, quality review (EQR), FS preparation, audit reporting & sign-off + agents | ✅ Done (2026-11-21) |
 | 10 | Billing integration (payment gateway, invoices, tax), Monitoring agent, Superadmin analytics, break-glass support access, performance & pen-test hardening | ✅ Done (2026-11-22) — external pen test and go-live checklist pending (SECURITY.md) |
+| 13 | General ledger import and TB reconciliation, drill-down, journal entry testing, ageing analysis, GL/ageing sampling populations | ✅ Done (2026-11-15) |
 | 12 | Management-prepared FS in the portal (tie-out, review, director approval), PDF output, programme ↔ risk-response links, AI step suggestions, industry request lists | ✅ Done (2026-11-14) |
 | 11 | Methodology libraries (AUDIRA template + firm copies), FSLI-routed Excel-style programme grids, .xlsx round trip, copy-as-link | ✅ Done (2026-11-14) |
 
@@ -191,6 +192,19 @@ critical defects from the previous one remain open.
 - Framework-specific disclosure checklists for the notes (would need licensed framework content).
 - Statement of cash flows / changes in equity are not tied out automatically (only SOFP and P&L lines).
 - Chrome must be installed on the production server for PDFs; run the app as a non-root user so the browser sandbox stays on.
+
+## Phase 13 — detailed scope (delivered 2026-11-15)
+- [x] GL import (file or engagement document), column detection, immutable lines, per-account reconciliation to the TB (ADR-048)
+- [x] Lead-schedule drill-down to postings
+- [x] Journal entry testing with saved tests, results and conclusion (ADR-049)
+- [x] Ageing listings: bucket mapping, reconciliation, overdue / wrong-side / concentration / prior-year analysis (ADR-050)
+- [x] Sampling populations from the GL and from ageing
+- [x] 207 tests on PostgreSQL
+
+### Open from Phase 13
+- Subsequent-receipts testing against post-year-end receipts is not automated (record it as a programme step).
+- Very large GLs (>200,000 rows) need a queued import; current limit is 200,000 rows per file.
+- Public holiday dates are entered by the team per test; AUDIRA does not ship a holiday calendar.
 
 ### Open decisions for go-live
 - Payment gateway provider (FPX/card) and the platform's tax position (ADR-037).

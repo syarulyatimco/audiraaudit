@@ -39,6 +39,29 @@
                             <div class="flex-1"><label class="label" for="file">{{ $plan->population_count ? 'Replace population' : 'Load population' }} (CSV/XLSX with reference and amount columns)</label><input id="file" type="file" name="file" class="input" required>@error('file')<p class="error">{{ $message }}</p>@enderror</div>
                             <button class="btn-secondary">Upload</button>
                         </form>
+                        @php $glActive = $engagement->activeGlImport(); $ageings = $engagement->ageingReports()->where('status', 'active')->get(); @endphp
+                        @if ($glActive || $ageings->isNotEmpty())
+                            <div class="mt-3 grid gap-3 border-t border-navy-50 pt-3 sm:grid-cols-2">
+                                @if ($glActive)
+                                    <form method="POST" action="{{ route('sampling.population.gl', [$engagement, $plan]) }}" class="space-y-2">
+                                        @csrf
+                                        <div class="text-xs font-semibold text-navy-900">Load from general ledger</div>
+                                        <select name="fsli" class="input !py-1.5 text-sm"><option value="">Accounts below…</option>@foreach ($engagement->fslis()->whereHas('mappings')->orderBy('sort_order')->get() as $f)<option value="{{ $f->code }}" @selected($plan->fsli?->id === $f->id)>{{ $f->code }} · {{ $f->name }} (all mapped accounts)</option>@endforeach</select>
+                                        <input name="accounts" class="input !py-1.5 text-sm" placeholder="or account codes, comma separated">
+                                        <div class="flex items-center gap-2"><select name="side" class="input !py-1.5 text-sm"><option value="debits">Debit postings</option><option value="credits">Credit postings</option><option value="all">All postings (absolute)</option></select><button class="btn-secondary btn-sm whitespace-nowrap">Load</button></div>
+                                    </form>
+                                @endif
+                                @if ($ageings->isNotEmpty())
+                                    <form method="POST" action="{{ route('sampling.population.ageing', [$engagement, $plan]) }}" class="space-y-2">
+                                        @csrf
+                                        <div class="text-xs font-semibold text-navy-900">Load from ageing</div>
+                                        <select name="report" class="input !py-1.5 text-sm">@foreach ($ageings as $ag)<option value="{{ $ag->uuid }}">{{ $ag->label() }}</option>@endforeach</select>
+                                        <button class="btn-secondary btn-sm">Load positive balances</button>
+                                    </form>
+                                @endif
+                                @error('population')<p class="error sm:col-span-2">{{ $message }}</p>@enderror
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>

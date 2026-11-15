@@ -160,6 +160,29 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
         Route::post('/fslis', [MappingController::class, 'storeFsli'])->name('fslis.store');
         Route::put('/fslis/{fsli}', [MappingController::class, 'updateFsli'])->name('fslis.update');
         Route::delete('/fslis/{fsli}', [MappingController::class, 'destroyFsli'])->name('fslis.destroy');
+        // General ledger, journal entry testing and ageing (Phase 13)
+        Route::controller(\App\Http\Controllers\Ledger\GeneralLedgerController::class)->group(function () {
+            Route::get('/general-ledger', 'index')->name('ledger.index');
+            Route::post('/general-ledger', 'upload')->middleware('throttle:uploads')->name('ledger.upload');
+            Route::get('/general-ledger/imports/{glImport}', 'configure')->name('ledger.configure');
+            Route::post('/general-ledger/imports/{glImport}', 'activate')->name('ledger.activate');
+            Route::post('/general-ledger/imports/{glImport}/discard', 'discard')->name('ledger.discard');
+            Route::get('/general-ledger/postings', 'accounts')->name('ledger.accounts');
+            Route::get('/general-ledger/journal-testing', 'journalTesting')->name('ledger.jet');
+            Route::post('/general-ledger/journal-testing', 'saveTest')->name('ledger.jet.save');
+            Route::get('/general-ledger/journal-tests/{jetTest}', 'showTest')->name('ledger.jet.show');
+            Route::post('/general-ledger/journal-tests/{jetTest}/items/{item}', 'recordItem')->withoutScopedBindings()->name('ledger.jet.item');
+            Route::post('/general-ledger/journal-tests/{jetTest}/conclude', 'conclude')->name('ledger.jet.conclude');
+            Route::post('/sampling/{samplingPlan}/population/gl', 'samplingPopulation')->name('sampling.population.gl');
+        });
+        Route::controller(\App\Http\Controllers\Ledger\AgeingController::class)->group(function () {
+            Route::get('/ageing', 'index')->name('ageing.index');
+            Route::post('/ageing', 'upload')->middleware('throttle:uploads')->name('ageing.upload');
+            Route::get('/ageing/{ageingReport}', 'show')->name('ageing.show');
+            Route::post('/ageing/{ageingReport}', 'activate')->name('ageing.activate');
+            Route::post('/ageing/{ageingReport}/discard', 'discard')->name('ageing.discard');
+            Route::post('/sampling/{samplingPlan}/population/ageing', 'samplingPopulation')->name('sampling.population.ageing');
+        });
         Route::get('/lead-schedules', [LeadScheduleController::class, 'index'])->name('lead-schedules.index');
         Route::get('/lead-schedules/{fsli}', [LeadScheduleController::class, 'show'])->name('lead-schedules.show');
         Route::post('/lead-schedules/{fsli}/paper', [LeadScheduleController::class, 'createPaper'])->name('lead-schedules.paper');
