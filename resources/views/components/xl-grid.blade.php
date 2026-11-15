@@ -54,6 +54,12 @@
                                 <template x-if="col.key === 'procedure' && row.isa_refs">
                                     <div class="mt-1 text-2xs font-medium text-teal-700" x-text="row.isa_refs"></div>
                                 </template>
+                                <template x-if="col.key === 'procedure' && row.linked">
+                                    <div class="mt-1 flex flex-wrap items-center gap-1 text-2xs" @click.stop>
+                                        <a :href="row.linked.url" class="link-chip" :title="row.linked.title" x-text="'⇢ ' + row.linked.ref + ' · ' + row.linked.status"></a>
+                                        <template x-for="pl in row.linked.plans" :key="pl.ref"><a :href="pl.url" class="link-chip" x-text="'◎ ' + pl.ref + ' · ' + pl.status"></a></template>
+                                    </div>
+                                </template>
                                 <template x-if="col.key === 'procedure' && row.guidance && {{ ($showGuidance ?? true) ? 'true' : 'false' }}">
                                     <div class="mt-0.5 text-2xs italic text-ink-400" x-text="row.guidance"></div>
                                 </template>
@@ -85,10 +91,20 @@
                         @endif
                         <td class="relative text-right">
                             <button type="button" class="rounded px-1.5 py-0.5 text-ink-400 hover:bg-navy-50 hover:text-navy-900" @click.stop="menu = menu === row.uuid ? null : row.uuid" title="Row actions">⋯</button>
-                            <div x-cloak x-show="menu === row.uuid" @click.outside="menu = null" class="absolute right-2 top-7 z-40 w-48 rounded-md border border-navy-100 bg-white py-1 text-left text-xs shadow-lg">
+                            <div x-cloak x-show="menu === row.uuid" @click.outside="menu = null" class="absolute right-2 top-7 z-40 w-64 rounded-md border border-navy-100 bg-white py-1 text-left text-xs shadow-lg">
                                 <template x-if="row.token">
                                     <button type="button" class="block w-full px-3 py-1.5 text-left hover:bg-navy-50" @click="copyLink(row)">Copy as link</button>
                                 </template>
+                                @if ($config['canManage'] && ! empty($config['urls']['procedure']))
+                                    <div class="border-b border-navy-50 px-3 py-1.5">
+                                        <div class="mb-1 text-2xs uppercase tracking-wide text-ink-400">Risk response</div>
+                                        <select class="input !py-1 text-xs" @click.stop @change="linkProcedure(row, $event.target.value)">
+                                            <option value="" x-text="row.linked ? 'Remove link' : 'Link to…'"></option>
+                                            <template x-for="p in procedures" :key="p.uuid"><option :value="p.uuid" :selected="row.linked && row.linked.uuid === p.uuid" x-text="p.label"></option></template>
+                                        </select>
+                                        <button type="button" x-show="! row.linked" class="mt-1 text-left text-teal-700 hover:underline" @click="createProcedure(row)">+ Create from this step</button>
+                                    </div>
+                                @endif
                                 @if ($config['canManage'])
                                     <button type="button" class="block w-full px-3 py-1.5 text-left hover:bg-navy-50" @click="addRow(row.uuid)">Insert row below</button>
                                     <button type="button" class="block w-full px-3 py-1.5 text-left hover:bg-navy-50" @click="moveRow(row, -1)">Move up</button>

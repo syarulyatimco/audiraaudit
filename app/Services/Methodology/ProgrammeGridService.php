@@ -8,7 +8,9 @@ use App\Models\EngagementFsli;
 use App\Models\MethodologyLibrary;
 use App\Models\MethodologyProgramme;
 use App\Models\ProgrammeRow;
+use App\Models\Procedure;
 use App\Models\ProgrammeSheet;
+use App\Services\Programme\ProgrammeService;
 use App\Models\User;
 use App\Support\Audit\ActivityLogger;
 use App\Support\Authorization\Permissions;
@@ -251,14 +253,66 @@ class ProgrammeGridService
             $row->{$field} = $value === '' && ! in_array($field, ['ref', 'procedure'], true) ? null : $value;
         }
 
+        return $this->persistEdit($row, $this->label($row->sheet, $field), $actor);
+    }
+
+    /** Links (or unlinks, with null) the risk-response procedure that carries out this step. */
+    public function linkProcedure(ProgrammeRow $row, ?Procedure $procedure, User $actor): ProgrammeRow
+    {
+        $engagement = $row->sheet->engagement;
+        $this->assertOpen($engagement);
+        if ($procedure && ($procedure->engagement_id !== $engagement->id || ! $procedure->isActive())) {
+            throw ValidationException::withMessages(['procedure' => 'Choose an active risk-response procedure of this engagement.']);
+        }
+        $row->procedure_id = $procedure?->id;
+
+        return $this->persistEdit($row, 'the linked risk response', $actor);
+    }
+
+    /**
+     * Creates a risk-response procedure from the step (nature from the stage, assertions from the
+     * Assertion codes, risks from references such as R01 in the Risk column) and links it.
+     */
+    public function createProcedure(ProgrammeRow $row, User $actor): Procedure
+    {
+        $sheet = $row->sheet;
+        $engagement = $sheet->engagement;
+        if ($row->procedure_id) {
+            throw ValidationException::withMessages(['procedure' => "{$row->ref} is already linked to a risk response."]);
+        }
+        if (trim($row->procedure) === '') {
+            throw ValidationException::withMessages(['procedure' => 'Describe the procedure first.']);
+        }
+        $codes = ['E' => 'existence', 'O' => 'occurrence', 'C' => 'completeness', 'A' => 'accuracy', 'CO' => 'cut_off', 'CL' => 'classification', 'R' => 'rights_obligations', 'V' => 'valuation_allocation', 'P' => 'presentation'];
+        $assertions = collect(preg_split('/[\s,;\/]+/', strtoupper((string) $row->assertions)))->map(fn ($c) => $codes[$c] ?? null)->filter()->unique()->values()->all();
+        preg_match_all('/\bR\d{2,3}\b/i', (string) $row->risk, $m);
+        $riskIds = $engagement->risks()->active()->whereIn('reference', array_map('strtoupper', $m[0]))->pluck('id')->all();
+
+        return DB::transaction(function () use ($row, $sheet, $engagement, $assertions, $riskIds, $actor) {
+            $p = app(ProgrammeService::class)->create($engagement, [
+                'title' => Str::limit($row->ref.' '.preg_replace('/\s+/', ' ', $row->procedure), 200, '…'),
+                'steps' => $row->procedure,
+                'nature' => match ($sheet->stage) { ProgrammeStage::Controls => 'test_of_controls', ProgrammeStage::Substantive => 'test_of_details', default => 'other' },
+                'assertions' => $assertions,
+                'risk_ids' => $riskIds,
+                'engagement_fsli_id' => $sheet->engagement_fsli_id,
+            ], $actor);
+            $this->linkProcedure($row, $p, $actor);
+
+            return $p;
+        });
+    }
+
+    private function persistEdit(ProgrammeRow $row, string $what, User $actor): ProgrammeRow
+    {
         if (! $row->isDirty()) {
             return $row;
         }
 
-        return DB::transaction(function () use ($row, $field, $actor) {
+        return DB::transaction(function () use ($row, $what, $actor) {
             $cleared = $row->isDone();
             if ($cleared) {
-                $this->logger->log('programme.signoffs_cleared', "Sign-offs on {$row->ref} cleared by an edit to ".$this->label($row->sheet, $field), $row, [
+                $this->logger->log('programme.signoffs_cleared', "Sign-offs on {$row->ref} cleared by an edit to {$what}", $row, [
                     'done_by' => $row->done_by, 'done_at' => $row->done_at?->toIso8601String(),
                     'reviewed_by' => $row->reviewed_by, 'reviewed_at' => $row->reviewed_at?->toIso8601String(),
                     'signed_hash' => $row->signed_hash,
@@ -313,6 +367,9 @@ class ProgrammeGridService
         }
         if (blank($row->conclusion)) {
             throw ValidationException::withMessages(['row' => "Record the conclusion for {$row->ref} before signing it off."]);
+        }
+        if ($row->procedure_id && $row->linkedProcedure?->samplingPlans()->where('status', '!=', 'evaluated')->exists()) {
+            throw ValidationException::withMessages(['row' => "Evaluate the sampling plans of {$row->linkedProcedure->reference} before signing {$row->ref} off."]);
         }
         $row->forceFill(['done_by' => $actor->id, 'done_at' => now(), 'signed_hash' => $row->contentHash()])->save();
         $this->logger->log('programme.row_done', "Programme step {$row->ref} signed off as done", $row, ['hash' => $row->signed_hash], $actor);

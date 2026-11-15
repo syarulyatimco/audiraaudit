@@ -231,6 +231,8 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
             Route::patch('/programmes/{programmeSheet}/rows/{programmeRow}', 'updateCell')->name('programmes.rows.update');
             Route::delete('/programmes/{programmeSheet}/rows/{programmeRow}', 'deleteRow')->name('programmes.rows.destroy');
             Route::post('/programmes/{programmeSheet}/rows/{programmeRow}/move', 'moveRow')->name('programmes.rows.move');
+            Route::post('/programmes/{programmeSheet}/rows/{programmeRow}/procedure', 'linkProcedure')->name('programmes.rows.procedure');
+            Route::post('/programmes/{programmeSheet}/rows/{programmeRow}/procedure/new', 'createProcedure')->name('programmes.rows.procedure.new');
             Route::post('/programmes/{programmeSheet}/rows/{programmeRow}/{action}', 'signoff')->whereIn('action', ['done', 'review', 'unsign'])->name('programmes.rows.signoff');
         });
 
@@ -256,12 +258,22 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
         Route::post('/completion/eqr', [CompletionController::class, 'eqr'])->name('completion.eqr');
         Route::get('/financial-statements', [ReportingController::class, 'statements'])->name('reporting.statements');
         Route::get('/audit-report', [ReportingController::class, 'report'])->name('reporting.report');
+        Route::get('/audit-report/pdf', [\App\Http\Controllers\Completion\ClientFsReviewController::class, 'reportPdf'])->middleware('throttle:uploads')->name('reporting.pdf');
+        // Management's financial statements, reviewed by the audit team (Phase 12)
+        Route::controller(\App\Http\Controllers\Completion\ClientFsReviewController::class)->prefix('/management-fs')->name('client-fs.')->group(function () {
+            Route::get('/', 'show')->name('show');
+            Route::post('/versions/{version:uuid}/review', 'review')->withoutScopedBindings()->name('review');
+            Route::post('/reopen', 'reopen')->name('reopen');
+            Route::put('/tieout', 'tieout')->name('tieout');
+            Route::get('/pdf', 'pdf')->middleware('throttle:uploads')->name('pdf');
+        });
         Route::put('/audit-report', [ReportingController::class, 'save'])->name('reporting.save');
         Route::post('/audit-report/submit/{stage}', [ReportingController::class, 'submit'])->whereIn('stage', ['opinion', 'signoff'])->name('reporting.submit');
 
         // Client requests (PBC) and correspondence (Phase 7)
         Route::get('/client-requests', [ClientRequestController::class, 'index'])->name('client-requests.index');
         Route::post('/client-requests', [ClientRequestController::class, 'store'])->name('client-requests.store');
+        Route::post('/client-requests/template', [ClientRequestController::class, 'template'])->name('client-requests.template');
         Route::post('/client-requests/send', [ClientRequestController::class, 'send'])->name('client-requests.send');
         Route::post('/client-requests/{item}/review', [ClientRequestController::class, 'review'])->name('client-requests.review');
         Route::post('/messages', [ClientRequestController::class, 'draftMessage'])->name('messages.store');
@@ -275,6 +287,7 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
         Route::post('/ai-runs/{aiRun}/accept-materiality', [AiRunController::class, 'acceptMateriality'])->name('ai-runs.accept-materiality');
         Route::post('/ai-runs/{aiRun}/accept-risks', [AiRunController::class, 'acceptRisks'])->name('ai-runs.accept-risks');
         Route::post('/ai-runs/{aiRun}/accept-procedures', [AiRunController::class, 'acceptProcedures'])->name('ai-runs.accept-procedures');
+        Route::post('/ai-runs/{aiRun}/accept-rows', [AiRunController::class, 'acceptRows'])->name('ai-runs.accept-rows');
         Route::post('/ai-runs/{aiRun}/accept-sampling', [AiRunController::class, 'acceptSampling'])->name('ai-runs.accept-sampling');
         Route::post('/ai-runs/{aiRun}/accept-message', [AiRunController::class, 'acceptMessage'])->name('ai-runs.accept-message');
         Route::post('/ai-runs/{aiRun}/accept-extraction', [AiRunController::class, 'acceptExtraction'])->name('ai-runs.accept-extraction');
@@ -349,4 +362,15 @@ Route::middleware(['auth', 'portal'])->prefix('portal')->name('portal.')->group(
     Route::get('/engagements/{engagement}', [PortalController::class, 'engagement'])->name('engagement');
     Route::post('/engagements/{engagement}/requests/{item}', [PortalController::class, 'upload'])->middleware('throttle:uploads')->scopeBindings()->name('upload');
     Route::post('/engagements/{engagement}/messages', [PortalController::class, 'reply'])->middleware('throttle:uploads')->name('reply');
+    // Management-prepared financial statements (Phase 12)
+    Route::controller(\App\Http\Controllers\Portal\PortalFsController::class)->prefix('/engagements/{engagement}/financial-statements')->name('fs.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::post('/', 'start')->name('start');
+        Route::put('/statements/{key}', 'saveStatement')->whereIn('key', ['sofp', 'sopl', 'soce', 'cfs'])->name('statement');
+        Route::put('/notes', 'saveNotes')->name('notes');
+        Route::post('/submit', 'submit')->name('submit');
+        Route::get('/export', 'export')->name('export');
+        Route::post('/import', 'import')->middleware('throttle:uploads')->name('import');
+        Route::get('/pdf', 'pdf')->middleware('throttle:uploads')->name('pdf');
+    });
 });

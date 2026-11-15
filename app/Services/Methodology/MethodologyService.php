@@ -248,11 +248,11 @@ class MethodologyService
      * @param  array<string, string>  $known  lower-case heading => field
      * @return array{0: array<string, int>, 1: list<list<string>>}
      */
-    public function locateHeader(array $rows, array $known): array
+    public function locateHeader(array $rows, array $known, string $marker = 'procedure'): array
     {
         foreach ($rows as $i => $row) {
             $lower = array_map(fn ($c) => mb_strtolower(trim((string) $c)), $row);
-            if (in_array('procedure', $lower, true)) {
+            if (in_array($marker, $lower, true)) {
                 $map = [];
                 foreach ($lower as $col => $h) {
                     if (isset($known[$h])) {
@@ -263,7 +263,7 @@ class MethodologyService
                 return [$map, array_slice($rows, $i + 1)];
             }
         }
-        throw ValidationException::withMessages(['file' => 'The worksheet needs a header row with a "Procedure" column. Download the template to start.']);
+        throw ValidationException::withMessages(['file' => 'The worksheet needs a header row with a "'.ucfirst($marker).'" column. Download the template to start.']);
     }
 
     public function assertEditable(MethodologyLibrary $library, User $actor): void

@@ -91,10 +91,13 @@ class ProgrammeGridController extends Controller
             'risks' => $engagement->risks()->get(['reference', 'title'])->map(fn ($r) => $r->reference.' '.$r->title),
             'documents' => $engagement->documents()->active()->orderBy('title')->get(['uuid', 'title']),
             'siblings' => $siblings,
+            'procedures' => $engagement->procedures()->active()->get(['uuid', 'reference', 'title'])->map(fn ($p) => ['uuid' => $p->uuid, 'label' => $p->reference.' '.\Illuminate\Support\Str::limit($p->title, 70)])->values(),
             'canManage' => ! $locked && $this->can($request, $engagement, 'engagement.manage_programme'),
             'canEdit' => ! $locked && $this->can($request, $engagement, 'engagement.execute_procedures'),
             'canReview' => ! $locked && $this->can($request, $engagement, 'engagement.review_working_papers'),
             'userId' => $request->user()->id,
+            'aiRun' => $engagement->aiRuns()->where('agent', 'audit_programme')->where('task', 'suggest_rows')->where('input->subject', $sheet->uuid)->first(),
+            'aiUnavailable' => app(\App\Ai\Runtime\AiOrchestrator::class)->unavailableReasons($engagement, 'audit_programme'),
         ]);
     }
 
@@ -208,8 +211,27 @@ class ProgrammeGridController extends Controller
         return response()->json(['row' => $this->rowJson($programmeRow->fresh(['doneBy', 'reviewer']), $engagement, $programmeSheet)]);
     }
 
+    public function linkProcedure(Request $request, Engagement $engagement, ProgrammeSheet $programmeSheet, ProgrammeRow $programmeRow): JsonResponse
+    {
+        $this->authorizeOn($request, $engagement, 'engagement.manage_programme');
+        $uuid = $request->validate(['procedure' => ['nullable', 'uuid']])['procedure'] ?? null;
+        $procedure = $uuid ? $engagement->procedures()->where('uuid', $uuid)->firstOrFail() : null;
+        $this->grid->linkProcedure($programmeRow, $procedure, $request->user());
+
+        return response()->json(['row' => $this->rowJson($programmeRow->fresh(['doneBy', 'reviewer']), $engagement, $programmeSheet)]);
+    }
+
+    public function createProcedure(Request $request, Engagement $engagement, ProgrammeSheet $programmeSheet, ProgrammeRow $programmeRow): JsonResponse
+    {
+        $this->authorizeOn($request, $engagement, 'engagement.manage_programme');
+        $p = $this->grid->createProcedure($programmeRow, $request->user());
+
+        return response()->json(['row' => $this->rowJson($programmeRow->fresh(['doneBy', 'reviewer']), $engagement, $programmeSheet), 'procedure' => ['uuid' => $p->uuid, 'label' => $p->reference.' '.$p->title]]);
+    }
+
     private function rowJson(ProgrammeRow $r, Engagement $engagement, ProgrammeSheet $sheet, ?\Illuminate\Support\Collection $resolved = null): array
     {
+        $p = $r->procedure_id ? $r->linkedProcedure()->with('samplingPlans:id,procedure_id,uuid,reference,status')->first() : null;
         $resolved ??= $this->links->resolve($this->links->find($r->wp_ref, $r->conclusion));
 
         return [
@@ -231,6 +253,11 @@ class ProgrammeGridController extends Controller
             'reviewed_at' => $r->reviewed_at ? local_time($r->reviewed_at, 'j M Y') : null,
             'wp_ref_html' => (string) $this->links->render($r->wp_ref, $resolved),
             'conclusion_html' => (string) $this->links->render($r->conclusion, $resolved),
+            'linked' => $p ? [
+                'uuid' => $p->uuid, 'ref' => $p->reference, 'title' => $p->title, 'status' => $p->status->label(),
+                'url' => route('programme.show', [$engagement, $p]),
+                'plans' => $p->samplingPlans->map(fn ($s) => ['ref' => $s->reference, 'status' => str_replace('_', ' ', $s->status->value ?? $s->status), 'url' => route('sampling.show', [$engagement, $s])])->values(),
+            ] : null,
             'token' => $r->linkToken(),
             'url' => route('links.show', ['step', $r->uuid]),
             'base' => route('programmes.rows.update', [$engagement, $sheet, $r]),

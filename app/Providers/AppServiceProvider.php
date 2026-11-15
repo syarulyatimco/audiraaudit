@@ -66,6 +66,8 @@ class AppServiceProvider extends ServiceProvider
             'programme_sheet' => \App\Models\ProgrammeSheet::class,
             'programme_row' => \App\Models\ProgrammeRow::class,
             'methodology_library' => \App\Models\MethodologyLibrary::class,
+            'client_financial_statement' => \App\Models\ClientFinancialStatement::class,
+            'client_fs_version' => \App\Models\ClientFsVersion::class,
             'completion_item' => \App\Models\CompletionItem::class,
             'engagement_completion' => \App\Models\EngagementCompletion::class,
             'audit_report' => \App\Models\AuditReport::class,

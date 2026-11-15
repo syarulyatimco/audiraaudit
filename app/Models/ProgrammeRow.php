@@ -15,7 +15,7 @@ class ProgrammeRow extends Model
     /** Cells a person types into; everything else is set by sign-off actions. */
     public const EDITABLE = ['ref', 'procedure', 'assertions', 'risk', 'wp_ref', 'conclusion'];
 
-    protected $fillable = ['sheet_id', 'position', 'ref', 'procedure', 'assertions', 'risk', 'wp_ref', 'conclusion', 'extra', 'isa_refs', 'guidance', 'created_by', 'updated_by'];
+    protected $fillable = ['sheet_id', 'position', 'ref', 'procedure', 'assertions', 'risk', 'wp_ref', 'conclusion', 'extra', 'isa_refs', 'guidance', 'procedure_id', 'created_by', 'updated_by'];
 
     protected function casts(): array
     {
@@ -37,6 +37,12 @@ class ProgrammeRow extends Model
         return $this->belongsTo(ProgrammeSheet::class, 'sheet_id');
     }
 
+    /** The risk-response procedure (Fieldwork › Risk responses) this step is carried out through. */
+    public function linkedProcedure(): BelongsTo
+    {
+        return $this->belongsTo(Procedure::class, 'procedure_id');
+    }
+
     public function doneBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'done_by');
@@ -54,6 +60,7 @@ class ProgrammeRow extends Model
 
         return hash('sha256', json_encode([
             $this->ref, $this->procedure, $this->assertions, $this->risk, $this->wp_ref, $this->conclusion, $extra,
+            ...($this->procedure_id ? [['procedure_id' => (int) $this->procedure_id]] : []),
         ], JSON_UNESCAPED_UNICODE));
     }
 

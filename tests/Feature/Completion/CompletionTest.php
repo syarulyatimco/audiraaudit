@@ -13,6 +13,8 @@ use Tests\Feature\Planning\PlanningTestCase;
 
 class CompletionTest extends PlanningTestCase
 {
+    use \Tests\Support\BuildsClientFs;
+
     private const PW = 'Password!2345';
 
     protected function setUp(): void
@@ -163,6 +165,9 @@ class CompletionTest extends PlanningTestCase
         $this->assertStringNotContainsString("\n\n\n", $r->body);
         $this->assertSame('approved', $r->opinion_status->value, 'the opinion itself did not change');
 
+        // Sign-off also needs management's director-approved financial statements, accepted by the team.
+        $this->actingAs($this->ctx['manager'])->post("{$b}/audit-report/submit/signoff")->assertSessionHasErrors('approval');
+        $accepted = $this->acceptedClientFs();
         $this->actingAs($this->ctx['manager'])->post("{$b}/audit-report/submit/signoff")->assertSessionHasNoErrors();
         $this->actingAs($this->ctx['manager'])->put("{$b}/audit-report", ['opinion' => 'unmodified', 'body' => 'x'])->assertSessionHasErrors('report');
         $so = $r->approvals()->pending()->sole();
@@ -173,6 +178,7 @@ class CompletionTest extends PlanningTestCase
         $r->refresh();
         $this->assertSame(['signed', $this->ctx['partner']->id, $r->bodyHash()], [$r->status, $r->signed_by, $r->body_sha256]);
         $this->assertTrue($r->fs_snapshot['balanced']);
+        $this->assertSame([$accepted->uuid, $accepted->content_sha256], [$r->fs_snapshot['client_fs']['uuid'], $r->fs_snapshot['client_fs']['sha256']]);
         $this->assertSame('signed_off', $this->ctx['engagement']->fresh()->status->value);
         try {
             DB::transaction(fn () => DB::table('audit_reports')->where('id', $r->id)->update(['body' => 'tampered']));
@@ -183,7 +189,7 @@ class CompletionTest extends PlanningTestCase
         // Locked engagement: pages are read-only.
         $this->actingAs($this->ctx['manager'])->get("{$b}/audit-report")->assertOk()->assertSee('Signed by')->assertDontSee('Generate text from template');
         $this->actingAs($this->ctx['manager'])->get("{$b}/audit-report?print=1")->assertOk()->assertSee('Our approved wording');
-        $this->actingAs($this->ctx['staff'])->get("{$b}/financial-statements")->assertOk()->assertSee('As signed')->assertSee('Statement of financial position');
+        $this->actingAs($this->ctx['staff'])->get("{$b}/financial-statements")->assertOk()->assertSee('As signed');
         $this->actingAs($this->ctx['manager'])->post("{$b}/audit-report/submit/signoff")->assertSessionHasErrors();
     }
 

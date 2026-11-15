@@ -5,6 +5,7 @@
     @case('recommend_materiality') @include('ai.partials.materiality-results') @break
     @case('suggest_risks') @include('ai.partials.risk-results') @break
     @case('draft_procedures') @include('ai.partials.procedure-results') @break
+    @case('suggest_rows') @include('ai.partials.programme-row-results') @break
     @case('recommend_parameters') @include('ai.partials.sampling-results') @break
     @case('draft_request_message') @include('ai.partials.message-results') @break
     @case('classify_document') @include('ai.partials.extraction-results') @break

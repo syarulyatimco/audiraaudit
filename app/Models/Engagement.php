@@ -123,6 +123,11 @@ class Engagement extends Model
         return $this->belongsTo(MethodologyLibrary::class);
     }
 
+    public function clientFinancialStatement(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ClientFinancialStatement::class);
+    }
+
     public function programmeSheets(): HasMany
     {
         return $this->hasMany(ProgrammeSheet::class)->orderBy('sort_order')->orderBy('reference');

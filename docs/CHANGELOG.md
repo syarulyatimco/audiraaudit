@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0] — 2026-11-14 — Phase 12 (Management-prepared FS, PDF output, programme ↔ risk-response links, AI step suggestions, request lists)
+
+### Added
+- **Management-prepared financial statements in the client portal.** The client chooses a layout (company MFRS/MPERS, cooperative, JMB/MC — captions only), edits the statement of financial position, profit or loss, changes in equity, cash flows and notes, uploads/downloads them as .xlsx, and submits versions (draft, or approved by the directors with names and date). Versions are frozen (DB trigger). The audit team never edits them: **Completion › Management FS** shows each version with checks (SOFP balances), a tie-out of every line to the audited figures by FSLI (caption matching plus manual FSLI codes), and lets the partner/manager request changes or accept a director-approved version (differences need an explanation) or re-open it. Report sign-off now requires an accepted version, and the signed report's snapshot records its version and SHA-256.
+- **PDF output** of the audit report and of management's financial statements (headless Chrome/Chromium; `AUDIRA_PDF_CHROME`, `AUDIRA_PDF_NO_SANDBOX`).
+- **Programme rows ↔ risk responses.** A grid row can link to a risk-response procedure or create one from the step (nature from the stage, assertions from the codes, risks from references in the Risk column, FSLI from the sheet). The row shows the procedure and its sampling plans; it cannot be signed done until those samples are evaluated. Linking is part of the signed content.
+- **AI step suggestions** for a programme sheet (Audit Programme agent, `suggest_rows`), accepted row by row.
+- **Ready-made client request lists** (companies, JMB/MC, cooperatives), added as draft requests and skipping ones already on the engagement.
+
+### Changed
+- Completion tabs: **Management FS** (new), **Audited figures** (the former "Financial statements" page, now the audit team's tie-out basis).
+- `MethodologyService::locateHeader()` takes the marker column name.
 ## [1.1.0] — 2026-11-14 — Phase 11 (Audit methodology libraries and Excel-style programmes)
 
 ### Added

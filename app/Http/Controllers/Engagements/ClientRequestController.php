@@ -49,6 +49,14 @@ class ClientRequestController extends Controller
         return back()->with('status', 'Request added as a draft. Send it when ready.');
     }
 
+    public function template(Request $request, Engagement $engagement, PbcService $pbc): RedirectResponse
+    {
+        Gate::authorize('view', $engagement);
+        $r = $pbc->addFromTemplate($engagement, (string) $request->validate(['template' => ['required', 'string', 'max:40']])['template'], $request->user());
+
+        return back()->with('status', "{$r['added']} draft request(s) added".($r['skipped'] ? ", {$r['skipped']} already on the list" : '').'. Review and send them when ready.');
+    }
+
     public function send(Request $request, Engagement $engagement, PbcService $pbc): RedirectResponse
     {
         Gate::authorize('view', $engagement);

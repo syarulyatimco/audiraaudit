@@ -141,7 +141,8 @@ class ReportService
             'opinion' => ['ok' => $r->opinion_status === SignificanceStatus::Approved, 'detail' => 'Opinion decided by the engagement partner'],
             'body' => ['ok' => filled($r->body) && ! preg_match('/\{\{\s*[a-z_]+\s*\}\}|\[(insert|report date)/i', $r->body), 'detail' => 'Report text complete (no unfilled placeholders)'],
             'report_date' => ['ok' => $r->report_date !== null && (! $eqrDate || $r->report_date->gte($eqrDate)), 'detail' => 'Report dated, not before the engagement quality review was completed'],
-            'fs' => ['ok' => $fs['balanced'], 'detail' => 'Financial statements balance and are fully mapped'],
+            'fs' => ['ok' => $fs['balanced'], 'detail' => 'Audited figures balance and are fully mapped'],
+            'client_fs' => ['ok' => $r->engagement->clientFinancialStatement?->acceptedVersion() !== null, 'detail' => "Management's director-approved financial statements accepted for the report"],
         ];
     }
 
@@ -188,7 +189,9 @@ class ReportService
         $fs = $this->fs->build($e);
         $r->forceFill([
             'signoff_status' => SignificanceStatus::Approved, 'status' => 'signed', 'signed_by' => $approval->decided_by, 'signed_at' => now(),
-            'body_sha256' => $r->bodyHash(), 'fs_snapshot' => $fs,
+            'body_sha256' => $r->bodyHash(), 'fs_snapshot' => $fs + ['client_fs' => ($v = $e->clientFinancialStatement?->acceptedVersion()) ? [
+                'version' => $v->version, 'uuid' => $v->uuid, 'sha256' => $v->content_sha256, 'approved_by' => $v->approved_by_names, 'approved_on' => $v->approved_on->toDateString(),
+            ] : null],
         ])->save();
         $from = $e->status;
         $e->forceFill(['status' => EngagementStatus::SignedOff])->save();

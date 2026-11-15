@@ -2,6 +2,10 @@
     <a href="{{ route('portal.dashboard') }}" class="text-xs text-ink-500 hover:text-navy-900">← Overview</a>
     <h1 class="mt-1 text-2xl font-semibold">{{ $engagement->name }}</h1>
     <p class="mt-1 text-sm text-ink-500">{{ $engagement->periodLabel() }}</p>
+    <a href="{{ route('portal.fs.show', $engagement) }}" class="card mt-6 flex items-center justify-between gap-4 px-5 py-4 hover:border-teal-300">
+        <div><div class="card-title">Financial statements</div><p class="text-sm text-ink-500">Prepare your financial statements and notes and submit them to your auditors.</p></div>
+        <span class="text-sm font-medium text-teal-700">Open →</span>
+    </a>
 
     <div class="mt-6 space-y-4">
         @forelse ($items as $item)

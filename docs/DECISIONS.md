@@ -194,6 +194,18 @@ Package installs are not available, and the needs are narrow, so `App\Support\Sp
 ## ADR-044 Copy-as-link tokens resolved at display time (2026-11-14)
 Shortcuts are stored as plain tokens (`[[step:uuid]]`, `[[doc:uuid]]`) inside the text the auditor writes, and resolved when shown, under the current tenant scope. Renumbering a step or retitling a document therefore never breaks a link; a token from another firm cannot be resolved and shows as a broken link. `/links/…` gives a plain URL form that checks engagement access before redirecting.
 
+## ADR-045 Financial statements are management's, prepared in the client portal (2026-11-14)
+**Context.** Preparing the client's financial statements is management's responsibility; an auditor preparing them creates a self-review threat.
+**Decision.** The statements and notes live in `client_financial_statements` and can only be written through portal routes by the client's own portal users (service check + portal middleware); no firm route writes them. Each submission is a frozen `client_fs_versions` row (trigger) with its SHA-256 and, when final, the approving directors and date. The audit team reviews: checks, tie-out of SOFP/P&L lines to the audited FSLI figures (auditor-only map), request changes, accept a director-approved version (differences must be explained) or re-open. Report sign-off requires an accepted version and snapshots its id and hash. The former TB-based statements page becomes "Audited figures" — the auditor's tie-out basis, not the financial statements.
+**Consequences.** Clients must be invited to the portal before the report can be signed. Layouts contain captions only; applying the framework's disclosure requirements is management's job.
+
+## ADR-046 PDFs from headless Chrome (2026-11-14)
+**Decision.** `PdfRenderer` prints self-contained Blade views (inline CSS) with Chrome/Chromium `--print-to-pdf`, a throwaway profile, a dead proxy so documents cannot fetch anything, and a timeout. No PDF library is added. The browser sandbox stays on unless `AUDIRA_PDF_NO_SANDBOX=true` (containers running as root only).
+**Consequences.** Production needs Chrome/Chromium installed; without it the PDF buttons are hidden and the routes return 503.
+
+## ADR-047 Programme rows link to risk responses (2026-11-14)
+**Decision.** `programme_rows.procedure_id` links a methodology step to a Phase 6 procedure (and so to its sampling plans). The link is part of the row's signed content hash; a linked row cannot be signed done while any of the procedure's sampling plans is not evaluated, mirroring the procedure completion rule.
+
 ## ADR-040 Browser hardening baseline (2026-11-22)
 **Decision.** All web responses carry a same-origin CSP, `frame-ancestors 'none'`, nosniff, strict referrer and permissions policies, COOP and HSTS on TLS; authenticated responses are `no-store`. Scripts still allow `'unsafe-inline'`/`'unsafe-eval'` because the standard Alpine build evaluates inline expressions.
 **Consequences.** Moving to the Alpine CSP build with nonces is the next tightening step (SECURITY.md checklist).

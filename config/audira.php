@@ -101,6 +101,16 @@ return [
     | Multi-factor authentication. Required for these roles (firm roles, 'firm_admin', 'superadmin').
     | AUDIRA_MFA_ENFORCED=false is only for automated tests of unrelated features.
     */
+    /*
+    | PDF output (Phase 12): headless Chrome / Chromium. Run the app as a non-root user in
+    | production; AUDIRA_PDF_NO_SANDBOX=true is only for containers that run as root.
+    */
+    'pdf' => [
+        'chrome' => env('AUDIRA_PDF_CHROME'),
+        'no_sandbox' => (bool) env('AUDIRA_PDF_NO_SANDBOX', false),
+        'timeout' => (int) env('AUDIRA_PDF_TIMEOUT', 60),
+    ],
+
     'mfa' => [
         'enforced' => (bool) env('AUDIRA_MFA_ENFORCED', true),
         'required_for' => ['superadmin', 'firm_admin', 'partner'],

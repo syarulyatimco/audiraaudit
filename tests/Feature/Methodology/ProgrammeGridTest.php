@@ -261,4 +261,38 @@ class ProgrammeGridTest extends PlanningTestCase
         $this->assertSame('Trade receivables — Debtors', $this->sheet('TR-S')->title);
         $this->assertSame($lib->id, $this->ctx['engagement']->fresh()->methodology_library_id);
     }
+
+    public function test_rows_link_to_risk_responses_and_their_samples(): void
+    {
+        $this->applyTemplate();
+        $this->actingAs($this->ctx['senior'])->post($this->base().'/planning/risks', $this->riskInput())->assertSessionHasNoErrors();
+        $risk = $this->ctx['engagement']->risks()->where('title', 'Overstatement of trade receivables')->sole();
+        $s = $this->sheet('TR-S');
+        $row = $s->rows()->get()[1]; // confirmations
+        ['staff' => $staff, 'senior' => $senior] = $this->ctx;
+        $this->actingAs($senior)->patchJson($this->rowUrl($s, $row), ['field' => 'risk', 'value' => "{$risk->reference} recoverability"])->assertOk();
+        $row->update(['conclusion' => 'Confirmations agreed.']);
+        $this->actingAs($staff)->postJson($this->rowUrl($s, $row, '/done'))->assertOk();
+
+        // Creating a risk response from the step: nature, assertions, risk and FSLI come from the row.
+        $this->actingAs($staff)->postJson($this->rowUrl($s, $row, '/procedure/new'))->assertForbidden();
+        $res = $this->actingAs($senior)->postJson($this->rowUrl($s, $row, '/procedure/new'))->assertOk();
+        $p = \App\Models\Procedure::sole();
+        $this->assertSame(['test_of_details', ['existence', 'rights_obligations'], [$risk->id], $this->fsliId('TR')], [$p->nature->value, $p->assertions, $p->risks->pluck('id')->all(), $p->engagement_fsli_id]);
+        $this->assertStringStartsWith('TR-S.02 Send positive confirmations', $p->title);
+        $res->assertJsonPath('row.linked.ref', $p->reference)->assertJsonPath('row.done_by', null); // linking is an edit: sign-offs cleared
+        $this->actingAs($senior)->postJson($this->rowUrl($s, $row, '/procedure/new'))->assertStatus(422);
+
+        // While the procedure's sample is not evaluated, the step cannot be signed done.
+        $this->actingAs($senior)->post($this->base().'/sampling', ['title' => 'Debtors confirmation', 'objective' => 'Existence.', 'test_type' => 'monetary', 'method' => 'mus', 'engagement_fsli_id' => $this->fsliId('TR'), 'procedure_id' => $p->id])->assertSessionHasNoErrors();
+        $this->actingAs($staff)->getJson($this->base()."/programmes/{$s->uuid}")->assertOk();
+        $this->actingAs($staff)->postJson($this->rowUrl($s, $row, '/done'))->assertStatus(422)->assertJsonPath('errors.row.0', "Evaluate the sampling plans of {$p->reference} before signing TR-S.02 off.");
+        $this->actingAs($staff)->get($this->base()."/programmes/{$s->uuid}")->assertOk()->assertSee($p->reference);
+
+        // Unlink, and links only to this engagement's procedures.
+        $this->actingAs($senior)->postJson($this->rowUrl($s, $row, '/procedure'), ['procedure' => '00000000-0000-4000-8000-000000000000'])->assertNotFound();
+        $this->actingAs($senior)->postJson($this->rowUrl($s, $row, '/procedure'), ['procedure' => null])->assertOk()->assertJsonPath('row.linked', null);
+        $this->actingAs($staff)->postJson($this->rowUrl($s, $row, '/done'))->assertOk();
+        $this->actingAs($senior)->postJson($this->rowUrl($s, $row, '/procedure'), ['procedure' => $p->uuid])->assertOk()->assertJsonPath('row.linked.uuid', $p->uuid);
+    }
 }

@@ -43,7 +43,8 @@ class AiRunController extends Controller
         if (filled($data['subject'] ?? null)) {
             // A task about one record (e.g. a sampling plan) — the record must belong to this engagement.
             abort_unless($engagement->samplingPlans()->where('uuid', $data['subject'])->exists()
-                || $engagement->documents()->where('uuid', $data['subject'])->exists(), 404);
+                || $engagement->documents()->where('uuid', $data['subject'])->exists()
+                || $engagement->programmeSheets()->where('uuid', $data['subject'])->exists(), 404);
             $input['subject'] = $data['subject'];
         }
         $run = $orchestrator->start($engagement, $data['agent'], $data['task'], $request->user(), $input);
@@ -185,6 +186,37 @@ class AiRunController extends Controller
         }
 
         return redirect()->route('programme.index', $engagement)->with('status', "{$n} AI-drafted procedure(s) added. Assign each one and review the steps.");
+    }
+
+    /** Add AI-suggested steps chosen by a person to the programme sheet the task was run for. */
+    public function acceptRows(Request $request, Engagement $engagement, AiRun $aiRun, \App\Services\Methodology\ProgrammeGridService $grid): RedirectResponse
+    {
+        Gate::authorize('view', $engagement);
+        abort_unless(\App\Support\Authorization\Permissions::allowsOnEngagement($request->user(), $engagement, 'engagement.manage_programme'), 403);
+        $data = $request->validate(['selected' => ['required', 'array', 'max:8'], 'selected.*' => ['integer', 'min:0']]);
+        if ($aiRun->agent !== 'audit_programme' || $aiRun->task !== 'suggest_rows' || ! $aiRun->isUsable()) {
+            throw ValidationException::withMessages(['ai' => 'These AI results cannot be applied.']);
+        }
+        $sheet = $engagement->programmeSheets()->where('uuid', $aiRun->input['subject'] ?? '')->firstOrFail();
+        $selected = array_map('intval', $data['selected']);
+        $existing = $sheet->rows()->pluck('procedure')->map(fn ($p) => mb_strtolower(trim($p)))->all();
+        $n = 0;
+        \Illuminate\Support\Facades\DB::transaction(function () use ($aiRun, $selected, $existing, $sheet, $grid, $request, &$n) {
+            foreach ($aiRun->output['rows'] ?? [] as $i => $r) {
+                if (! in_array($i, $selected, true) || in_array(mb_strtolower(trim($r['procedure'])), $existing, true)) {
+                    continue;
+                }
+                $row = $grid->addRow($sheet, null, $request->user());
+                foreach (['procedure' => $r['procedure'], 'assertions' => $r['assertions'], 'risk' => implode(', ', $r['risk_references'])] as $f => $v) {
+                    $grid->updateCell($row, $f, $v, $request->user());
+                }
+                $row->forceFill(['isa_refs' => $r['isa_refs'] ?: null, 'guidance' => 'AI-suggested step (accepted by '.$request->user()->name.'): '.$r['rationale']])->save();
+                $n++;
+            }
+        });
+        app(\App\Support\Audit\ActivityLogger::class)->log('ai.rows_accepted', "{$n} AI-suggested step(s) added to {$sheet->reference}", $sheet, ['ai_run' => $aiRun->uuid], $request->user());
+
+        return redirect()->route('programmes.show', [$engagement, $sheet])->with('status', "{$n} suggested step(s) added at the end of {$sheet->reference}. Review the wording before work starts.");
     }
 
     /** Copy AI-recommended parameters into a draft sampling plan; AUDIRA computes the size. */

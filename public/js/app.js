@@ -234,6 +234,21 @@ document.addEventListener('alpine:init', () => {
       catch (e) { this.toast(e.message, true); }
       this.menu = null;
     },
+    async linkProcedure(row, uuid) {
+      try { const data = await send('POST', this.url(cfg.urls.row, row.uuid) + '/procedure', { procedure: uuid || null }); this.replace(data.row); this.toast(uuid ? `${row.ref} linked to ${data.row.linked.ref}` : 'Link removed'); }
+      catch (e) { this.toast(e.message, true); }
+      this.menu = null;
+    },
+    async createProcedure(row) {
+      try {
+        const data = await send('POST', this.url(cfg.urls.row, row.uuid) + '/procedure/new', {});
+        this.replace(data.row);
+        (cfg.procedures ||= []).push(data.procedure);
+        this.toast(`Risk response ${data.row.linked.ref} created and linked`);
+      } catch (e) { this.toast(e.message, true); }
+      this.menu = null;
+    },
+    get procedures() { return cfg.procedures || []; },
     copyLink(row) {
       navigator.clipboard.writeText(row.token).then(() => this.toast(`Link to ${row.ref} copied — paste it into any WP ref, conclusion or working paper.`));
       this.menu = null;
@@ -272,4 +287,84 @@ document.addEventListener('alpine:init', () => {
       return { n, done: this.rows.filter((x) => x.done_by_id).length, reviewed: this.rows.filter((x) => x.reviewed_by_id).length };
     },
   }); });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// fsEditor — management's statement editor in the client portal. Amounts are typed as
+// accounting text ("1,250.00", "(320.00)") and parsed on the server; totals update live.
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('alpine:init', () => {
+  const fmt = (sen) => {
+    if (sen === null || sen === undefined || sen === '') return '';
+    const n = Math.abs(Number(sen)) / 100;
+    const s = n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return Number(sen) < 0 ? `(${s})` : s;
+  };
+  const parse = (v) => {
+    if (v === null || v === undefined) return 0;
+    let s = String(v).trim().replace(/[\s,]|RM/gi, '');
+    if (s === '' || s === '-') return 0;
+    let neg = false;
+    const m = s.match(/^\((.*)\)$/);
+    if (m) { neg = true; s = m[1]; }
+    if (s.startsWith('-')) { neg = !neg; s = s.slice(1); }
+    const n = Number(s);
+    return Number.isFinite(n) ? Math.round(n * 100) * (neg ? -1 : 1) : 0;
+  };
+  const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content;
+
+  window.Alpine.data('fsEditor', (cfg) => ({
+    rows: cfg.rows.map((r) => ({ ...r, cy: fmt(r.cy), py: fmt(r.py) })),
+    key: cfg.key,
+    dirty: false,
+    saving: false,
+    error: null,
+    saved: false,
+    fmt,
+    add(i) {
+      const r = { id: null, kind: 'line', caption: '', note: '', cy: '', py: '', side: this.key === 'sofp' ? (this.rows[i]?.side || 'asset') : null };
+      this.rows.splice(i + 1, 0, r); this.dirty = true;
+    },
+    remove(i) { this.rows.splice(i, 1); this.dirty = true; },
+    move(i, d) {
+      const j = i + d; if (j < 0 || j >= this.rows.length) return;
+      [this.rows[i], this.rows[j]] = [this.rows[j], this.rows[i]]; this.dirty = true;
+    },
+    total(side, col) {
+      return this.rows.filter((r) => r.kind === 'line' && (!side || r.side === side)).reduce((a, r) => a + parse(r[col]), 0);
+    },
+    tidy(r, col) { if (String(r[col]).trim() !== '') r[col] = fmt(parse(r[col])); },
+    async save() {
+      this.saving = true; this.error = null;
+      try {
+        const res = await fetch(cfg.url, { method: 'PUT', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf() },
+          body: JSON.stringify({ rows: this.rows.map((r) => ({ ...r, cy: r.cy === '' ? null : String(r.cy), py: r.py === '' ? null : String(r.py) })) }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { const f = data.errors ? Object.values(data.errors)[0] : null; throw new Error((Array.isArray(f) ? f[0] : f) || data.message || 'Not saved.'); }
+        this.rows = data.rows.map((r) => ({ ...r, cy: fmt(r.cy), py: fmt(r.py) }));
+        this.dirty = false; this.saved = true; setTimeout(() => (this.saved = false), 2500);
+      } catch (e) { this.error = e.message; }
+      this.saving = false;
+    },
+  }));
+
+  window.Alpine.data('fsNotes', (cfg) => ({
+    notes: cfg.notes,
+    dirty: false, saving: false, error: null, saved: false,
+    add() { this.notes.push({ id: null, title: '', body: '' }); this.dirty = true; },
+    remove(i) { this.notes.splice(i, 1); this.dirty = true; },
+    move(i, d) { const j = i + d; if (j < 0 || j >= this.notes.length) return; [this.notes[i], this.notes[j]] = [this.notes[j], this.notes[i]]; this.dirty = true; },
+    async save() {
+      this.saving = true; this.error = null;
+      try {
+        const res = await fetch(cfg.url, { method: 'PUT', credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf() }, body: JSON.stringify({ notes: this.notes }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { const f = data.errors ? Object.values(data.errors)[0] : null; throw new Error((Array.isArray(f) ? f[0] : f) || data.message || 'Not saved.'); }
+        this.notes = data.notes; this.dirty = false; this.saved = true; setTimeout(() => (this.saved = false), 2500);
+      } catch (e) { this.error = e.message; }
+      this.saving = false;
+    },
+  }));
 });

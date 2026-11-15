@@ -1,4 +1,4 @@
-<x-layouts.app :title="'Financial statements · '.$engagement->code">
+<x-layouts.app :title="'Audited figures · '.$engagement->code">
     @unless ($print)
         <x-engagement-nav :engagement="$engagement" />
         <x-completion-nav :engagement="$engagement" />
@@ -8,7 +8,8 @@
         <div class="card card-body flex flex-wrap items-center justify-between gap-3 text-sm">
             <div>
                 <div class="font-semibold text-navy-900">{{ $engagement->client->name }}</div>
-                <div class="text-ink-500">Primary statements for the period {{ $engagement->periodLabel() }} · {{ $engagement->reporting_framework->label() }} · RM</div>
+                <div class="text-ink-500">Audited figures for {{ $engagement->periodLabel() }} by FSLI, from the adjusted trial balance · RM</div>
+                <div class="mt-1 text-xs text-ink-500">The audit team's working basis for tying out management's financial statements. The financial statements themselves are prepared by management in the client portal (<a href="{{ route('client-fs.show', $engagement) }}" class="text-teal-700 hover:underline">Management FS</a>).</div>
             </div>
             <div class="flex items-center gap-2">
                 @if ($snapshot)<span class="badge badge-success">As signed {{ local_time(\Illuminate\Support\Carbon::parse($fs['generated_at'])) }}</span>

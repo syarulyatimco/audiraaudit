@@ -19,6 +19,7 @@ class ToolRegistry
         'library_search' => LibrarySearchTool::class,
         'procedures_list' => ProceduresListTool::class,
         'population_summary' => PopulationSummaryTool::class,
+        'programme_sheet' => ProgrammeSheetTool::class,
         'pbc_list' => PbcListTool::class,
         'engagement_overview' => EngagementOverviewTool::class,
         'document_text' => DocumentTextTool::class,

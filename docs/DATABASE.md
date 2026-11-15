@@ -269,6 +269,14 @@ did is in the append-only steps and usage rows.
 
 Shared tables use four policies: `methodology_read` (SELECT: firm_id IS NULL or tenant), and insert/update/delete restricted to the tenant (or bypass for platform seeding).
 
+## 3l. Phase 12 schema (implemented)
+
+| Table / column | Tenant | Key points |
+|---|---|---|
+| client_financial_statements | RLS | one per engagement; template, statements jsonb (sofp/sopl/soce/cfs rows: id, kind heading/line/subtotal, caption, side, note, cy/py sen), notes jsonb, status draft/submitted/changes_requested/accepted (CHECK), tieout jsonb (auditor only) |
+| client_fs_versions | RLS | version (unique per statement), content jsonb + content_sha256, submitted_by/at, directors_approved + names + date (**CHECK**), review_status received/changes_requested/accepted/superseded (**CHECK accepted ⇒ directors approved + reviewer; changes ⇒ comment**); **trigger: content, author and approval immutable; no delete** |
+| programme_rows.procedure_id | — | linked risk-response procedure (restrict delete) |
+
 ## 4. Row-Level Security
 
 RLS is enabled **and forced** on every table with `firm_id`:

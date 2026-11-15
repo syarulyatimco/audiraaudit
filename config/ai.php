@@ -93,7 +93,7 @@ return [
         ],
         'audit_programme' => [
             'class' => App\Ai\Agents\AuditProgrammeAgent::class,
-            'tools' => ['risks_list', 'fsli_list', 'materiality_current', 'procedures_list', 'library_search'],
+            'tools' => ['risks_list', 'fsli_list', 'materiality_current', 'procedures_list', 'programme_sheet', 'library_search'],
         ],
         'sampling' => [
             'class' => App\Ai\Agents\SamplingAgent::class,

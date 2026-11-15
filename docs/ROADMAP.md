@@ -18,6 +18,7 @@ critical defects from the previous one remain open.
 | 8 | Audit testing, evidence linking, findings, misstatement evaluation, adjustments + agents | ✅ Done (2026-11-20) |
 | 9 | Completion, quality review (EQR), FS preparation, audit reporting & sign-off + agents | ✅ Done (2026-11-21) |
 | 10 | Billing integration (payment gateway, invoices, tax), Monitoring agent, Superadmin analytics, break-glass support access, performance & pen-test hardening | ✅ Done (2026-11-22) — external pen test and go-live checklist pending (SECURITY.md) |
+| 12 | Management-prepared FS in the portal (tie-out, review, director approval), PDF output, programme ↔ risk-response links, AI step suggestions, industry request lists | ✅ Done (2026-11-14) |
 | 11 | Methodology libraries (AUDIRA template + firm copies), FSLI-routed Excel-style programme grids, .xlsx round trip, copy-as-link | ✅ Done (2026-11-14) |
 
 ## Phase 1 — detailed scope (delivered)
@@ -177,6 +178,19 @@ critical defects from the previous one remain open.
 - Paragraph references in the template: the firm's technical reviewer adds them from the firm's licensed standards.
 - AI: let the Audit Programme agent suggest extra rows for a sheet from the risk register (accept-only, like other agents).
 - Linking a grid row to a Phase 6 risk-response procedure and its sampling plan (today a shortcut in WP ref).
+
+## Phase 12 — detailed scope (delivered 2026-11-14)
+- [x] Client portal: management prepares SOFP, P&L, SOCE, cash flows and notes (layouts for companies, cooperatives, JMB/MC), Excel round trip, versioned submissions with directors' approval (ADR-045)
+- [x] Audit team: read-only review, checks, tie-out to audited figures, request changes / accept / re-open; report sign-off gate and snapshot
+- [x] PDF of the audit report and management's statements via headless Chrome (ADR-046)
+- [x] Programme rows linked to risk-response procedures and their samples (ADR-047)
+- [x] AI step suggestions per programme sheet; ready-made request lists
+- [x] 204 tests on PostgreSQL
+
+### Open from Phase 12
+- Framework-specific disclosure checklists for the notes (would need licensed framework content).
+- Statement of cash flows / changes in equity are not tied out automatically (only SOFP and P&L lines).
+- Chrome must be installed on the production server for PDFs; run the app as a non-root user so the browser sandbox stays on.
 
 ### Open decisions for go-live
 - Payment gateway provider (FPX/card) and the platform's tax position (ADR-037).

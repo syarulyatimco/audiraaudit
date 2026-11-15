@@ -86,6 +86,22 @@
                 </form>
             @endif
 
+            @if ($canManage)
+                <form method="POST" action="{{ route('client-requests.template', $engagement) }}" class="card">
+                    @csrf
+                    <div class="card-header"><h2 class="card-title">Add a ready-made list</h2></div>
+                    <div class="card-body space-y-3">
+                        @php $suggested = $engagement->client->entity_type?->value === 'jmb_mc' ? 'jmb_mc' : ($engagement->client->entity_type?->value === 'cooperative' ? 'cooperative' : 'company'); @endphp
+                        <select name="template" class="input" aria-label="Request list">
+                            @foreach (config('pbc_templates') as $key => $t)<option value="{{ $key }}" @selected($key === $suggested)>{{ $t['label'] }} ({{ count($t['items']) }} requests)</option>@endforeach
+                        </select>
+                        <p class="hint">Adds the list as draft requests. Requests already on this engagement are skipped. Edit or cancel any before sending.</p>
+                        @error('template')<p class="error">{{ $message }}</p>@enderror
+                    </div>
+                    <div class="flex justify-end border-t border-navy-100/70 px-5 py-3"><button class="btn-secondary">Add drafts</button></div>
+                </form>
+            @endif
+
             @if ($canMessage)
                 @include('ai.partials.panel', ['agent' => 'client_communication', 'task' => 'draft_request_message', 'title' => 'AI reminder draft',
                     'blurb' => 'Drafts a courteous message about outstanding requests. It is saved as a draft; you edit and send it.', 'show' => true])

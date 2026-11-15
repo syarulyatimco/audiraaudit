@@ -20,7 +20,9 @@
                 'row' => $base, 'move' => $base.'/move', 'signoff' => $base.'/__ACTION__',
                 'add' => route('programmes.rows.store', [$engagement, $sheet]),
                 'columns' => route('programmes.columns.store', [$engagement, $sheet]),
+                'procedure' => true,
             ],
+            'procedures' => $procedures,
         ];
     @endphp
 
@@ -73,6 +75,13 @@
             <input type="file" name="file" accept=".xlsx" id="programme-upload" onchange="this.form.submit()">
         </form>
         @error('file')<p class="error mt-2">{{ $message }}</p>@enderror
+    @endif
+
+    @if ($canManage)
+        <div class="mt-6">
+            @include('ai.partials.panel', ['agent' => 'audit_programme', 'task' => 'suggest_rows', 'subject' => $sheet->uuid, 'title' => 'AI step suggestions',
+                'blurb' => 'The Audit Programme agent reads this programme and the risk register and proposes extra steps for risks not yet covered. Nothing is added until you choose rows.', 'show' => true])
+        </div>
     @endif
 
     <div class="mt-6 grid gap-6 lg:grid-cols-3">

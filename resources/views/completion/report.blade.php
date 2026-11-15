@@ -59,7 +59,9 @@
                     </div>
                 @endif
             </form>
-            @if ($report->body)<a href="{{ route('reporting.report', [$engagement, 'print' => 1]) }}" target="_blank" class="btn-secondary">Print view</a>@endif
+            @if ($report->body)<a href="{{ route('reporting.report', [$engagement, 'print' => 1]) }}" target="_blank" class="btn-secondary">Print view</a>
+                @if (app(\App\Support\Pdf\PdfRenderer::class)->available())<a href="{{ route('reporting.pdf', $engagement) }}" class="btn-secondary">Download PDF</a>@endif
+            @endif
         </div>
         <div class="space-y-6">
             @if ($report->exists)

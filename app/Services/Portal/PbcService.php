@@ -43,6 +43,31 @@ class PbcService
         });
     }
 
+    /**
+     * Adds a ready-made request list as draft items. Items whose title already exists on the
+     * engagement are skipped, so the same list can be applied twice safely.
+     *
+     * @return array{added: int, skipped: int}
+     */
+    public function addFromTemplate(Engagement $engagement, string $key, User $actor): array
+    {
+        $template = config("pbc_templates.{$key}") ?? throw ValidationException::withMessages(['template' => 'Choose a request list.']);
+        $existing = $engagement->pbcItems()->pluck('title')->map(fn ($t) => mb_strtolower($t))->flip();
+        $out = ['added' => 0, 'skipped' => 0];
+        foreach ($template['items'] as [$title, $category, $description]) {
+            if ($existing->has(mb_strtolower($title))) {
+                $out['skipped']++;
+
+                continue;
+            }
+            $this->create($engagement, ['title' => $title, 'category' => $category, 'description' => $description], $actor, 'template');
+            $out['added']++;
+        }
+        $this->logger->log('pbc.template_applied', "Request list \"{$template['label']}\" added: {$out['added']} draft item(s)", $engagement, $out + ['template' => $key], $actor);
+
+        return $out;
+    }
+
     public function update(PbcItem $item, array $data, User $actor): PbcItem
     {
         EngagementGuard::assertEditable($item->engagement);
