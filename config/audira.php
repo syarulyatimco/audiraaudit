@@ -89,6 +89,9 @@ return [
         // the engagement quality review.
         'engagement.manage_completion' => ['engagement_partner', 'manager', 'senior'],
         'engagement.prepare_report' => ['engagement_partner', 'manager'],
+        // Management's financial statements (ADR-051): the audit team may also edit the working
+        // draft (add rows, amounts, notes). Only management submits versions and directors' approval.
+        'engagement.edit_client_fs' => ['engagement_partner', 'manager', 'senior'],
         'engagement.eqr_review' => ['eqr_reviewer'],
     ],
 

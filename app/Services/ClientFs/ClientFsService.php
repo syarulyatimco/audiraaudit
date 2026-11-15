@@ -44,7 +44,7 @@ class ClientFsService
 
     public function start(Engagement $engagement, string $template, User $client): ClientFinancialStatement
     {
-        $this->assertClient($engagement, $client);
+        $this->assertEditor($engagement, $client);
         $t = config("fs_templates.{$template}") ?? throw ValidationException::withMessages(['template' => 'Choose a layout.']);
         if ($engagement->clientFinancialStatement()->exists()) {
             throw ValidationException::withMessages(['template' => 'The financial statements for this audit have already been started.']);
@@ -63,7 +63,7 @@ class ClientFsService
             'notes' => array_map(fn ($title) => ['id' => $this->newId(), 'title' => $title, 'body' => ''], $t['notes']),
             'updated_by' => $client->id,
         ]);
-        $this->logger->log('client_fs.started', "Management started the financial statements ({$t['label']})", $fs, [], $client);
+        $this->logger->log('client_fs.started', $this->who($client)." started the financial statements ({$t['label']})", $fs, [], $client);
 
         return $fs;
     }
@@ -76,8 +76,10 @@ class ClientFsService
             throw ValidationException::withMessages(['statement' => 'Unknown statement.']);
         }
         $statements = $fs->statements;
+        $before = $statements[$key]['rows'];
         $statements[$key]['rows'] = $this->cleanRows($key, $rows);
         $fs->update(['statements' => $statements, 'updated_by' => $client->id]);
+        $this->logEdit($fs, $client, $fs->label($key), $before, $statements[$key]['rows']);
     }
 
     /** @param list<array<string, mixed>> $notes */
@@ -99,11 +101,15 @@ class ClientFsService
             }
             $clean[] = ['id' => $this->validId($n['id'] ?? null), 'title' => $title, 'body' => $body];
         }
+        $before = $fs->notes;
         $fs->update(['notes' => $clean, 'updated_by' => $client->id]);
+        $this->logEdit($fs, $client, 'Notes', $before, $clean);
     }
 
     public function submit(ClientFinancialStatement $fs, User $client, bool $directorsApproved, ?string $names, ?string $approvedOn): ClientFsVersion
     {
+        // Only management submits and records the directors' approval (ADR-045, ADR-051).
+        $this->assertClient($fs->engagement, $client);
         $this->assertDraftable($fs, $client);
         $content = ['template' => $fs->template, 'statements' => $fs->statements, 'notes' => $fs->notes];
         $checks = $this->checks($content);
@@ -349,7 +355,7 @@ class ClientFsService
             $count += count($list);
         }
         $fs->update(['statements' => $statements, 'updated_by' => $client->id]);
-        $this->logger->log('client_fs.imported', 'Management updated the financial statements from Excel', $fs, ['statements' => array_keys($by), 'rows' => $count], $client);
+        $this->logger->log('client_fs.imported', $this->who($client).' updated the financial statements from Excel', $fs, ['statements' => array_keys($by), 'rows' => $count], $client);
 
         return ['statements' => count($by), 'rows' => $count];
     }
@@ -411,9 +417,33 @@ class ClientFsService
         }
     }
 
-    private function assertDraftable(ClientFinancialStatement $fs, User $client): void
+    /**
+     * Who may change the working draft: management (client portal users of this client) or a
+     * member of the audit team with engagement.edit_client_fs (ADR-051). Submitting a version
+     * and recording the directors' approval stay with management.
+     */
+    public function canEdit(Engagement $engagement, User $user): bool
     {
-        $this->assertClient($fs->engagement, $client);
+        if ($user->isClientUser()) {
+            return $user->client_id === $engagement->client_id;
+        }
+
+        return Permissions::allowsOnEngagement($user, $engagement, 'engagement.edit_client_fs');
+    }
+
+    public function assertEditor(Engagement $engagement, User $user): void
+    {
+        if (! $this->canEdit($engagement, $user)) {
+            throw ValidationException::withMessages(['fs' => 'You cannot change these financial statements.']);
+        }
+        if ($engagement->status->isLocked()) {
+            throw ValidationException::withMessages(['fs' => 'This audit is closed.']);
+        }
+    }
+
+    private function assertDraftable(ClientFinancialStatement $fs, User $user): void
+    {
+        $this->assertEditor($fs->engagement, $user);
         if ($fs->status === 'accepted') {
             throw ValidationException::withMessages(['fs' => 'The audit team has accepted these financial statements. Ask them to re-open them if a change is needed.']);
         }
@@ -427,6 +457,55 @@ class ClientFsService
         if ($engagement->status->isLocked()) {
             throw ValidationException::withMessages(['review' => 'This engagement is locked.']);
         }
+    }
+
+    /**
+     * Change history shared by management and the audit team: every start, edit, Excel
+     * upload, submission, review and re-opening of these statements, newest first.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\ActivityLog>
+     */
+    public function history(ClientFinancialStatement $fs, int $limit = 60): \Illuminate\Support\Collection
+    {
+        $versionIds = $fs->versions()->pluck('id');
+
+        return \App\Models\ActivityLog::query()
+            ->where('event', 'like', 'client\_fs.%')
+            ->where(function ($q) use ($fs, $versionIds) {
+                $q->where(fn ($q) => $q->where('subject_type', $fs->getMorphClass())->where('subject_id', $fs->id));
+                if ($versionIds->isNotEmpty()) {
+                    $q->orWhere(fn ($q) => $q->where('subject_type', (new ClientFsVersion)->getMorphClass())->whereIn('subject_id', $versionIds));
+                }
+            })
+            ->latest('id')->limit($limit)
+            ->get(['id', 'event', 'description', 'actor_label', 'properties', 'created_at']);
+    }
+
+    private function who(User $user): string
+    {
+        return $user->isClientUser() ? 'Management' : 'The audit team';
+    }
+
+    /**
+     * Change history entry for a draft save: who, which part, and how many rows were added,
+     * removed or changed (compared by row id).
+     *
+     * @param  list<array<string, mixed>>  $before
+     * @param  list<array<string, mixed>>  $after
+     */
+    private function logEdit(ClientFinancialStatement $fs, User $user, string $part, array $before, array $after): void
+    {
+        $old = collect($before)->keyBy('id');
+        $new = collect($after)->keyBy('id');
+        $added = $new->keys()->diff($old->keys())->count();
+        $removed = $old->keys()->diff($new->keys())->count();
+        $changed = $new->filter(fn ($r, $id) => $old->has($id) && $old[$id] != $r)->count();
+        if ($added + $removed + $changed === 0 && $old->keys()->values()->all() === $new->keys()->values()->all()) {
+            return;
+        }
+        $bits = array_filter([$added ? "{$added} added" : null, $removed ? "{$removed} removed" : null, $changed ? "{$changed} changed" : null]);
+        $this->logger->log('client_fs.edited', $this->who($user)." edited {$part}".($bits ? ' ('.implode(', ', $bits).')' : ' (order changed)'), $fs,
+            ['part' => $part, 'added' => $added, 'removed' => $removed, 'changed' => $changed, 'side' => $user->isClientUser() ? 'client' : 'firm'], $user);
     }
 
     private function newId(): string
