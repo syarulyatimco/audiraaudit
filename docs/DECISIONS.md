@@ -215,6 +215,12 @@ Shortcuts are stored as plain tokens (`[[step:uuid]]`, `[[doc:uuid]]`) inside th
 ## ADR-050 Ageing buckets carry their starting age (2026-11-15)
 **Decision.** Ageing listings differ between clients, so each bucket column is stored with a label and a "from (days)" value (guessed from the heading, confirmed by the team). Every row's buckets must add up to its total. Overdue analysis uses the bucket ages; the listing is reconciled to its FSLI's unadjusted TB balance.
 
+
+## ADR-051 The audit team may edit management's draft; only management submits (2026-11-15)
+**Context.** Clients asked for the audit team to be able to add rows and amounts to the draft statements with them (e.g. during the close meeting). ADR-045 kept all writes in the portal.
+**Decision.** Amends ADR-045. The working draft (`client_financial_statements`) can be started and edited (statements, notes, Excel upload) by the client's portal users **or** by firm users holding `engagement.edit_client_fs` (engagement partner, manager, senior) through firm routes under Completion › Management FS › Working draft. Submitting a version and recording the directors' approval remain portal-only (`ClientFsService::assertClient`); accepted statements are frozen for everyone until re-opened; submitted versions stay immutable. Every save is logged as `client_fs.edited` with the side (client/firm) and rows added/removed/changed (no-op saves are not logged), and both sides see the same change history.
+**Consequences.** Management's ownership is evidenced by its submission and directors' approval, and audit-team edits are visible to management. The engagement partner should consider the self-review threat when the team drafts content (ISQM/ethics) — the history makes the extent of audit-team involvement reviewable.
+
 ## ADR-040 Browser hardening baseline (2026-11-22)
 **Decision.** All web responses carry a same-origin CSP, `frame-ancestors 'none'`, nosniff, strict referrer and permissions policies, COOP and HSTS on TLS; authenticated responses are `no-store`. Scripts still allow `'unsafe-inline'`/`'unsafe-eval'` because the standard Alpine build evaluates inline expressions.
 **Consequences.** Moving to the Alpine CSP build with nonces is the next tightening step (SECURITY.md checklist).

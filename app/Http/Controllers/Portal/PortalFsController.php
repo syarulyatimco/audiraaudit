@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-/** Management prepares its financial statements in the client portal; the audit team only reviews them. */
+/** Management prepares its financial statements in the client portal; the audit team reviews them and may also edit the draft (ADR-051). */
 class PortalFsController extends Controller
 {
     public function __construct(private ClientFsService $service) {}
@@ -34,6 +34,7 @@ class PortalFsController extends Controller
             'suggested' => match ($engagement->client->entity_type?->value) { 'jmb_mc' => 'jmb_mc', 'cooperative' => 'cooperative', default => 'company' },
             'locked' => $engagement->status->isLocked() || $fs?->status === 'accepted',
             'pdf' => app(PdfRenderer::class)->available(),
+            'history' => $fs ? $this->service->history($fs) : collect(),
         ]);
     }
 
