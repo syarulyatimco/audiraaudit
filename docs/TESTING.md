@@ -12,7 +12,7 @@ createdb audira_test           # owned by the app role
 vendor/bin/phpunit             # or: composer test
 ```
 
-## Current suite (204 tests, 2,571 assertions — all passing 2026-11-14)
+## Current suite (207 tests, 2,691 assertions — all passing 2026-11-15)
 
 | Area | File | What it proves |
 |---|---|---|
@@ -56,6 +56,8 @@ vendor/bin/phpunit             # or: composer test
 | Programme grids | `Methodology/ProgrammeGridTest` | routing to engagement / FSLI codes / classification fall-back; cell editing permissions; done needs a conclusion; hash-bound review, staff cannot review, preparer cannot self-review (app + CHECK); edit clears sign-offs with log; signed rows undeletable (app + trigger); rows and custom columns; .xlsx export/import (updates, adds, new columns, sign-off cells ignored, bad file); link tokens in grid and working papers, broken cross-firm links, redirect route; library switch blocked after signing; completion gate; risk-response links (create from row, done blocked until samples evaluated, unlink/relink, foreign procedures refused) |
 | Management FS | `ClientFs/ClientFinancialStatementsTest` | portal-only preparation (firm users and other clients refused), row/amount validation, notes; draft and director-approved submissions (balance, names, date), frozen versions (trigger), review permissions, changes need a comment, only the latest director-approved version accepted, explanation required for differences, tie-out guess/manual map/unknown codes, re-open and lock; Excel round trip keeping line ids; real PDF rendering when Chrome is present |
 | Request lists | `Portal/PbcTemplateTest` | permissions, drafts only, categories, second list skips existing titles |
+| General ledger | `Ledger/GeneralLedgerTest` | permissions, header detection past report titles, column map, required columns, totals and dates, b/f openings, nil P&L opening, reconciliation agreed and with differences, supersession, row-numbered errors, import from an engagement document, drill-down and search, immutable lines; journal entry criteria (weekend, combined criteria with minimum, threshold), save permissions/empty/none found, results (exception needs a note), conclusion gating and lock; GL sampling population |
+| Ageing | `Ledger/AgeingTest` | permissions, header and bucket-age detection, total row skipped, analysis by age, reconciliation to TR, over-90, credit balances, top customers, immutable lines, bucket/total mismatch error, discard, sampling population of positive balances |
 | Platform | `Admin/SuperadminTest` | admin area isolation both ways, plan editing with price snapshots, plan change, suspend/restore, billing minimum & free client users, superadmin CLI |
 
 ## Checklist for every new module

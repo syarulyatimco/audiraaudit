@@ -149,7 +149,29 @@ class SamplingService
             throw ValidationException::withMessages(['file' => 'No population items found.']);
         }
 
-        DB::transaction(function () use ($plan, $items, $file, $actor) {
+        $this->loadPopulation($plan, $items, $file->getClientOriginalName(), $actor);
+    }
+
+    /**
+     * Replaces the plan's population with already-validated items (from an uploaded file, the
+     * general ledger or an ageing report). Each item needs a unique item_ref and amount_sen.
+     *
+     * @param  list<array{item_ref: string, description: ?string, amount_sen: int, item_date: ?string}>  $items
+     */
+    public function loadPopulation(SamplingPlan $plan, array $items, string $source, User $actor): void
+    {
+        $this->assertEditable($plan, $actor);
+        if (! $items) {
+            throw ValidationException::withMessages(['population' => 'No population items found.']);
+        }
+        if (count($items) > 100000) {
+            throw ValidationException::withMessages(['population' => 'A population can have up to 100,000 items.']);
+        }
+        if (count(array_unique(array_column($items, 'item_ref'))) !== count($items)) {
+            throw ValidationException::withMessages(['population' => 'Population item references must be unique.']);
+        }
+        $items = array_values($items);
+        DB::transaction(function () use ($plan, $items, $source, $actor) {
             $plan->populationItems()->delete();
             $hash = hash_init('sha256');
             foreach (array_chunk($items, 1000, true) as $chunk) {
@@ -161,7 +183,7 @@ class SamplingService
                 PopulationItem::insert($rows);
             }
             $plan->forceFill([
-                'population_source' => mb_substr($file->getClientOriginalName(), 0, 200),
+                'population_source' => mb_substr($source, 0, 200),
                 'population_count' => count($items),
                 'population_value_sen' => array_sum(array_column($items, 'amount_sen')),
                 'population_sha256' => hash_final($hash),

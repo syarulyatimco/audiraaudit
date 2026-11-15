@@ -128,6 +128,26 @@ class Engagement extends Model
         return $this->hasOne(ClientFinancialStatement::class);
     }
 
+    public function glImports(): HasMany
+    {
+        return $this->hasMany(GlImport::class)->latest('id');
+    }
+
+    public function activeGlImport(): ?GlImport
+    {
+        return $this->glImports()->where('status', 'active')->first();
+    }
+
+    public function jetTests(): HasMany
+    {
+        return $this->hasMany(JetTest::class)->orderBy('reference');
+    }
+
+    public function ageingReports(): HasMany
+    {
+        return $this->hasMany(AgeingReport::class)->latest('id');
+    }
+
     public function programmeSheets(): HasMany
     {
         return $this->hasMany(ProgrammeSheet::class)->orderBy('sort_order')->orderBy('reference');

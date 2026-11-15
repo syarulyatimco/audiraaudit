@@ -31,6 +31,8 @@ Legend: 🤖 AI may draft/recommend · 👤 human performs · ✅ human approval
 2. 🤖 Suggest account → FSLI mappings; 👤 accept/override; mapping templates reused across clients.
 3. Lead schedules generated per FSLI.
 
+*General ledger and ageing (Phase 13):* Trial balance › General ledger imports the GL, reconciles every account to the TB and lets the team drill from lead schedules into postings; journal entry testing responds to the risk of management override (ISA 240). Trial balance › Ageing imports aged receivables / payables, reconciles them to the FSLI and analyses overdue and wrong-side balances. Both can supply sampling populations.
+
 ## Stage 5 — Materiality (Phase 5) — *ISA 320, ISA 450*
 1. 🤖 Recommend benchmark & percentage with rationale and alternatives.
 2. 👤 Set overall, performance, specific (per FSLI/class) materiality and clearly-trivial threshold; record assumptions & rationale.

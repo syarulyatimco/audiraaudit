@@ -15,6 +15,8 @@ class ClientFinancialStatement extends Model
 
     public const STATEMENTS = ['sofp', 'sopl', 'soce', 'cfs'];
 
+    protected $attributes = ['status' => 'draft'];
+
     protected $fillable = ['engagement_id', 'template', 'statements', 'notes', 'updated_by'];
 
     protected function casts(): array

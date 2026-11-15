@@ -206,6 +206,15 @@ Shortcuts are stored as plain tokens (`[[step:uuid]]`, `[[doc:uuid]]`) inside th
 ## ADR-047 Programme rows link to risk responses (2026-11-14)
 **Decision.** `programme_rows.procedure_id` links a methodology step to a Phase 6 procedure (and so to its sampling plans). The link is part of the row's signed content hash; a linked row cannot be signed done while any of the procedure's sampling plans is not evaluated, mirroring the procedure completion rule.
 
+## ADR-048 General ledger import reconciles to the TB (2026-11-15)
+**Decision.** The GL follows the TB pattern: the source file is stored as a hashed, scanned document (or an existing engagement document is chosen), columns are confirmed against a preview, and activation re-reads the stored file and writes immutable `gl_lines`. Each account is reconciled: opening (GL "balance b/f" rows, else prior-year TB for balance-sheet accounts, nil for P&L) + movements = current TB closing. Differences are shown, not blocked — they are audit evidence to explain.
+
+## ADR-049 Journal entry testing criteria are the team's choice (2026-11-15)
+**Decision.** AUDIRA offers characteristics (weekend, flagged dates, period-end window, round amounts, threshold, users, infrequent users, journal types, keywords, accounts) and selects entries meeting a minimum number of them. No criteria set or threshold is presented as required. A saved test freezes the selection (max 500 entries), records a result per entry (exceptions need an explanation) and requires all results before the conclusion.
+
+## ADR-050 Ageing buckets carry their starting age (2026-11-15)
+**Decision.** Ageing listings differ between clients, so each bucket column is stored with a label and a "from (days)" value (guessed from the heading, confirmed by the team). Every row's buckets must add up to its total. Overdue analysis uses the bucket ages; the listing is reconciled to its FSLI's unadjusted TB balance.
+
 ## ADR-040 Browser hardening baseline (2026-11-22)
 **Decision.** All web responses carry a same-origin CSP, `frame-ancestors 'none'`, nosniff, strict referrer and permissions policies, COOP and HSTS on TLS; authenticated responses are `no-store`. Scripts still allow `'unsafe-inline'`/`'unsafe-eval'` because the standard Alpine build evaluates inline expressions.
 **Consequences.** Moving to the Alpine CSP build with nonces is the next tightening step (SECURITY.md checklist).
