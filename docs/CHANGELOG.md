@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.1] — 2026-11-15 — Shared editing of management's financial statements
+
+### Added
+- **The audit team can edit the working draft** of management's financial statements (Completion › Management FS › Working draft): set up the draft, add/remove/move rows, change amounts and notes, upload/download .xlsx and print a draft PDF. Requires `engagement.edit_client_fs` (partner, manager, senior). Management sees the same live draft in the portal.
+- **"+ Add row", "+ Heading", "+ Subtotal"** buttons at the end of every statement (portal and firm), in addition to the per-row insert.
+- **Change history** shared by both sides (portal: Submit & history; firm: Change history): who changed which statement and how many rows were added, removed or changed, plus submissions, reviews and re-openings.
+
+### Changed
+- ADR-045 amended by ADR-051: submitting versions and the directors' approval remain management-only; accepted statements stay frozen for everyone until re-opened.
+- The statement/notes editor is a shared Blade component (`x-fs-editor`).
+
 ## [1.3.0] — 2026-11-15 — Phase 13 (General ledger, journal entry testing, ageing)
 
 ### Added

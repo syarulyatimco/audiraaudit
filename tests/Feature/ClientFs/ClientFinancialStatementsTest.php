@@ -24,7 +24,7 @@ class ClientFinancialStatementsTest extends PlanningTestCase
         $this->mapAll();
     }
 
-    public function test_management_prepares_the_statements_and_the_audit_team_cannot_edit_them(): void
+    public function test_management_prepares_the_statements_in_the_portal(): void
     {
         $client = $this->portalUser();
         $this->actingAs($client)->get($this->fsUrl())->assertOk()->assertSee('Set up your financial statements');
@@ -45,14 +45,14 @@ class ClientFinancialStatementsTest extends PlanningTestCase
         $this->actingAs($client)->putJson($this->fsUrl().'/notes', ['notes' => [['title' => 'Corporate information', 'body' => 'The company is a private limited company.'], ['title' => '', 'body' => '']]])
             ->assertOk()->assertJsonCount(1, 'notes');
 
-        // The audit team has no route to write the statements, and the service refuses firm users.
+        // Firm users cannot use the portal routes; staff (no edit_client_fs) are refused by the service.
         $this->actingAs($this->ctx['manager'])->putJson($this->fsUrl().'/statements/sofp', ['rows' => []])->assertForbidden();
         $this->assertSame('Property, plant and equipment', $fs->fresh()->statements['sofp']['rows'][0]['caption']);
         try {
-            app(\App\Services\ClientFs\ClientFsService::class)->saveNotes($fs, [], $this->ctx['manager']);
-            $this->fail('firm users must not prepare management\'s statements');
+            app(\App\Services\ClientFs\ClientFsService::class)->saveNotes($fs, [], $this->ctx['staff']);
+            $this->fail('staff must not edit management\'s statements');
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $this->assertStringContainsString('Only management', $e->getMessage());
+            $this->assertStringContainsString('cannot change', $e->getMessage());
         }
 
         // Another client's contact cannot see these statements.

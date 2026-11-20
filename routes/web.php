@@ -289,6 +289,13 @@ Route::middleware(['auth', 'mfa', 'firm.active'])->group(function () {
             Route::post('/reopen', 'reopen')->name('reopen');
             Route::put('/tieout', 'tieout')->name('tieout');
             Route::get('/pdf', 'pdf')->middleware('throttle:uploads')->name('pdf');
+            // Shared working draft (ADR-051)
+            Route::post('/start', 'start')->name('start');
+            Route::put('/statements/{key}', 'saveStatement')->whereIn('key', \App\Models\ClientFinancialStatement::STATEMENTS)->name('statement');
+            Route::put('/notes', 'saveNotes')->name('notes');
+            Route::get('/export', 'export')->name('export');
+            Route::post('/import', 'import')->middleware('throttle:uploads')->name('import');
+            Route::get('/draft-pdf', 'draftPdf')->middleware('throttle:uploads')->name('draft-pdf');
         });
         Route::put('/audit-report', [ReportingController::class, 'save'])->name('reporting.save');
         Route::post('/audit-report/submit/{stage}', [ReportingController::class, 'submit'])->whereIn('stage', ['opinion', 'signoff'])->name('reporting.submit');

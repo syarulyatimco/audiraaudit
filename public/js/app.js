@@ -290,7 +290,7 @@ document.addEventListener('alpine:init', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// fsEditor — management's statement editor in the client portal. Amounts are typed as
+// fsEditor — management's statement editor (client portal and audit team). Amounts are typed as
 // accounting text ("1,250.00", "(320.00)") and parsed on the server; totals update live.
 // ─────────────────────────────────────────────────────────────────────────────
 document.addEventListener('alpine:init', () => {
@@ -321,8 +321,8 @@ document.addEventListener('alpine:init', () => {
     error: null,
     saved: false,
     fmt,
-    add(i) {
-      const r = { id: null, kind: 'line', caption: '', note: '', cy: '', py: '', side: this.key === 'sofp' ? (this.rows[i]?.side || 'asset') : null };
+    add(i, kind = 'line') {
+      const r = { id: null, kind, caption: '', note: '', cy: '', py: '', side: this.key === 'sofp' ? (this.rows[i]?.side || 'asset') : null };
       this.rows.splice(i + 1, 0, r); this.dirty = true;
     },
     remove(i) { this.rows.splice(i, 1); this.dirty = true; },

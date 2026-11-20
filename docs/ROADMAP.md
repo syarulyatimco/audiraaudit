@@ -201,6 +201,10 @@ critical defects from the previous one remain open.
 - [x] Sampling populations from the GL and from ageing
 - [x] 207 tests on PostgreSQL
 
+### Follow-up 1.3.1 (2026-11-15)
+- [x] Audit team can edit management's working draft; add-row buttons; shared change history (ADR-051)
+- [x] 210 tests on PostgreSQL
+
 ### Open from Phase 13
 - Subsequent-receipts testing against post-year-end receipts is not automated (record it as a programme step).
 - Very large GLs (>200,000 rows) need a queued import; current limit is 200,000 rows per file.
